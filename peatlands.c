@@ -925,8 +925,74 @@ int main(int argc, char *argv[])
   
   print_header();
 
+  /* process command-line input */
+  for(c=1; c<argc; c++)
+    {
+      store_flag = argv[c];
+      if( store_flag != NULL )
+	{
+	  if( !strcmp(store_flag,"-p") ||
+	      !strcmp(store_flag,"--port")) {
+	    store_input=argv[c+1];
+	    osc_port_in=store_input;
+	  }
 
+	  if( !strcmp(store_flag,"-sp") ||
+	      !strcmp(store_flag,"--send-port")) {
+	    store_input=argv[c+1];
+	    osc_port_out=store_input;
+	  }
+	  
+	  if( !strcmp(store_flag,"-b") ||
+	      !strcmp(store_flag,"--bitdepth")) {
+	    store_input = argv[c+1];
+	    bitdepth=atoi(store_input);
+	  }
+	  
+	  if( !strcmp(store_flag,"-i") ||
+	      !strcmp(store_flag,"--input")) {
+	    store_input = argv[c+1];
+	    input=atoi(store_input);
+	  }
 
+	  if( !strcmp(store_flag,"-o") ||
+	      !strcmp(store_flag,"--output")) {
+	    store_input = argv[c+1];
+	    output=atoi(store_input);
+	  }
+	  
+	  if( !strcmp(store_flag,"-f") ||
+	      !strcmp(store_flag,"--file")) {
+	    store_input = argv[c+1];
+	    file_path=store_input;
+	  }
+	  
+	  if( !strcmp(store_flag,"-fi") ||
+	      !strcmp(store_flag,"--fifo-size")) {
+	    store_input = argv[c+1];
+	    fifo_size=atoi(store_input);
+	  }
+
+	  /* reset temporarily stored flag&input */
+	  store_input=NULL;
+	  store_flag=NULL;
+	}
+    }
+
+  if( osc_port_in == NULL )
+    osc_port_in="97211";
+  
+  if( osc_port_out == NULL )
+    osc_port_out="97217";
+
+  printf("channels in: %d\n", input);
+  printf("channels out: %d\n", output);
+  printf("bitdepth: %dbits\n", bitdepth);
+  printf("fifo size: %d\n", fifo_size);
+  printf("osc receive port: %s\n", osc_port_in);
+  printf("osc send port: %s\n", osc_port_out);
+  printf("filepath: %s\n\n\n", file_path);
+  
   /* non-generic methods */
   lo_server_thread_add_method(st, "/cyperus/list/main", "s", osc_list_main_handler, NULL);
   lo_server_thread_add_method(st, "/cyperus/list/bus", "siis", osc_list_single_bus_handler, NULL);
