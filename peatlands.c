@@ -52,7 +52,7 @@ char *incoming_message;
 #define MAXMODULEPARAMS 4
 
 /* MODULE MAX PARAMETER RESOLUTION (column slider length) */
-#define MAXMODULEPARAMSRES 15 
+#define MAXMODULEPARAMSRES 15
 
 /* MODULE MAX PARAMETER RECORDING LENGTH */
 #define MAXMODULEPARAMLENGTH = 150000 /* 150000 steps,10ms each, ~42min total time*/
@@ -67,7 +67,7 @@ struct parameter_modulated
 {
   int enable_record;
   int enable_envelope;
-  
+
   /* envelope characteristics */
   int ceiling;
   int floor;
@@ -75,7 +75,7 @@ struct parameter_modulated
   int position; /* position along 'length'  */
   float value; /* actual value of this parameter */
 };
-  
+
 struct parameter_modulated modulated_parameters[MAXMODULES][MAXMODULEPARAMS];
 
 /* how do we allow assignments of these in a meaningful way? */
@@ -121,7 +121,7 @@ column_rampup(monome_t *monome, int column, int floor, int ceiling)
     {
       monome_led_off(monome,column,i);
     }
-  
+
   for(i=15-floor;i>=ceiling;i--)
     {
       monome_led_on(monome,column,i);
@@ -136,13 +136,13 @@ initialize_state_variables() {
     {
       module_bypass[i] = 0;
       module_bypass_led[i] = 0;
-      
+
       for(c=0;c<MAXMODULEPARAMS;c++)
 	{
 	  modulated_parameters[i][c].enable_record = 0;
 	  modulated_parameters[i][c].enable_envelope = 0;
 	  modulated_parameters[i][c].ceiling = 0;
-	  modulated_parameters[i][c].floor = 0; 
+	  modulated_parameters[i][c].floor = 0;
 	  modulated_parameters[i][c].length = 0.0;
 	  modulated_parameters[i][c].position = 0;
 	  modulated_parameters[i][c].value = module_parameter_scale[i][c][15 - modulated_parameters[i][c].floor - 1];
@@ -186,7 +186,7 @@ monome_edit_delay_handler(int module_no)
   // printf("sending /cyperus/edit/module/delay %s %s ... \n", bus_port_out_path, main_out_0);
   // lo_send(t, "/cyperus/add/connection", "ss", bus_port_out_path, main_out_0);
   printf("sent.\n");
-  
+
   /* dsp_edit_delay(module_no,amt,time,feedback); */
 
   return 0;
@@ -202,21 +202,21 @@ clock_manager(void *arg) {
   int scale_difference;
   int current_led_position = 0;
   float step_length = 0.0;
-  
-  
+
+
   float step_time_scaled = 0.0;
   float step_value = 0.0;
   int current_step = 0;
-  
+
   do {
     for(i=0; i<MAXMODULES; i++)
       {
 	for(c=0; c<MAXMODULEPARAMS; c++)
 	  {
-	    if( modulated_parameters[i][c].enable_record ) { 
+	    if( modulated_parameters[i][c].enable_record ) {
 	      modulated_parameters[i][c].length = modulated_parameters[i][c].length + 1;;
 	    }
-	    
+	
 	    if( modulated_parameters[i][c].enable_envelope )
 	      {
 		/* reset counter */
@@ -229,7 +229,7 @@ clock_manager(void *arg) {
 		scale_difference = modulated_parameters[i][c].ceiling - modulated_parameters[i][c].floor;
 		step_length = fabs((float)envelope_peak / (float)scale_difference);
 
-		/* find current LED position based on parameter location 
+		/* find current LED position based on parameter location
 		   first, if we're on the attack section of the attack/decay env */
 		if( modulated_parameters[i][c].position < envelope_peak )
 		  {
@@ -339,7 +339,7 @@ setup_cyperus_modules_delay() {
   printf("sending /cyperus/add/bus / main0 in out ... \n");
   lo_send(t, "/cyperus/add/bus", "ssss", "/", "main0", "in", "out");
   printf("sent.\n");
-  
+
   printf("sending /cyperus/list/bus / 1 ... \n");
   lo_send(t, "/cyperus/list/bus", "si", "/", 1);
   printf("sent.\n");
@@ -353,7 +353,7 @@ setup_cyperus_modules_delay() {
   for(count=0; count < 37; count++)
     bus_path[count+1] = bus_id[count];
   bus_path[count] = '\0';
-  
+
   printf("sending /cyperus/list/bus_port %s ... \n", bus_path);
   lo_send(t, "/cyperus/list/bus_port", "s", bus_path);
   printf("sent.\n");
@@ -394,12 +394,12 @@ setup_cyperus_modules_delay() {
   free(incoming_message);
 
   printf("delay_id: %s\n", delay_id);
-  
+
   module_path = malloc(sizeof(char) * (strlen(bus_path) + 38));
   strcpy(module_path, bus_path);
   strcat(module_path, "?");
   strcat(module_path, delay_id);
-  
+
   printf("sending /cyperus/list/module_port %s ... \n", module_path);
   lo_send(t, "/cyperus/list/module_port", "s", module_path);
   printf("sent.\n");
@@ -410,12 +410,12 @@ setup_cyperus_modules_delay() {
 
   printf("module_ports: %s\n", module_ports);
   /* add delay and associated ports */
-  
+
   module_port_in = malloc(sizeof(char) * 37);
   for(count=4; count<40; count++) {
     module_port_in[count - 4] = module_ports[count];
   }
-  
+
   subptr = malloc(sizeof(char) * (strlen(module_ports) + 1));
   subptr = strstr(module_ports, "out:");
   out_pos = subptr - module_ports;
@@ -436,12 +436,12 @@ setup_cyperus_modules_delay() {
 
   printf("module_port_in_path: %s\n", module_port_in_path);
   printf("module_port_out_path: %s\n", module_port_out_path);
-  
-  
+
+
   printf("sending /cyperus/add/connection %s %s ... \n", main_in_0, bus_port_in_path);
   lo_send(t, "/cyperus/add/connection", "ss", main_in_0, bus_port_in_path);
   printf("sent.\n");
-  
+
   printf("sending /cyperus/add/connection %s %s ... \n", bus_port_in_path, module_port_in_path);
   lo_send(t, "/cyperus/add/connection", "ss", bus_port_in_path, module_port_in_path);
   printf("sent.\n");
@@ -449,7 +449,7 @@ setup_cyperus_modules_delay() {
   printf("sending /cyperus/add/connection %s %s ... \n", module_port_out_path, bus_port_out_path);
   lo_send(t, "/cyperus/add/connection", "ss", module_port_out_path, bus_port_out_path);
   printf("sent.\n");
-  
+
   printf("sending /cyperus/add/connection %s %s ... \n", bus_port_out_path, main_out_0);
   lo_send(t, "/cyperus/add/connection", "ss", bus_port_out_path, main_out_0);
   printf("sent.\n");
@@ -471,9 +471,9 @@ void *
 state_manager(void *arg) {
 
   setup_cyperus_modules_delay();
-  
+
   initialize_state_variables();
-  
+
   struct monome_t *monome = arg;
   int i,c;
   do {
@@ -509,7 +509,7 @@ update_modulation_state(int module_no, int param_no, int y)
 {
 
   fprintf(stderr,"update modulation state module_no %d param_no %d y %d\n",module_no, param_no, y);
-  
+
   if (!modulated_parameters[module_no][param_no].enable_record &&
       !modulated_parameters[module_no][param_no].enable_envelope)
     {
@@ -535,7 +535,7 @@ update_modulation_state(int module_no, int param_no, int y)
 } /* update_modulation_state */
 
 void
-handle_press(const monome_event_t *e, void *data) 
+handle_press(const monome_event_t *e, void *data)
 {
   unsigned int x, y, i, x2, y2, button, c, edit_module;
 
@@ -549,16 +549,16 @@ handle_press(const monome_event_t *e, void *data)
 
   if(x>=0&&x<4&&y==15) {
     module_bypass[0]=!module_bypass[0];
-    dsp_bypass(0,module_bypass[0]);
+    // dsp_bypass(0,module_bypass[0]);
   } else if(x>3&&x<8&&y==15) {
     module_bypass[1]=!module_bypass[1];
-    dsp_bypass(1,module_bypass[1]);
+    // dsp_bypass(1,module_bypass[1]);
   } else if(x>7&&x<12&&y==15) {
     module_bypass[2]=!module_bypass[2];
-    dsp_bypass(2,module_bypass[2]);
+    // dsp_bypass(2,module_bypass[2]);
   } else if(x>11&&x<16&&y==15) {
     module_bypass[3]=!module_bypass[3];
-    dsp_bypass(3,module_bypass[3]);
+    // dsp_bypass(3,module_bypass[3]);
   }
 
   if(x>=0&&x<4&&y<15) {
@@ -567,35 +567,35 @@ handle_press(const monome_event_t *e, void *data)
       module_parameter_led[0][0][x]=y+1;
       edit_module=1; /* flag module to-edit */
     }
-    
-      switch(x) {
-      case 0:
-	/* invert column's led position,offset by 1, translate value */
-	update_modulation_state(0,0,15-y-1);
-	if(edit_module)
-	  module_parameter[0][0]=module_parameter_scale[0][0][15-y-1];
-	break;
-      case 1:
-	update_modulation_state(0,1,15-y-1);
-	if(edit_module)
-	  module_parameter[0][1]=module_parameter_scale[0][1][15-y-1];
-	break;
-      case 2:
-	update_modulation_state(0,2,15-y-1);
-	if(edit_module)
-	  module_parameter[0][2]=module_parameter_scale[0][2][15-y-1];
-	break;
-      case 3:
-	update_modulation_state(0,3,15-y-1);
-	if(edit_module)
-	  module_parameter[0][3]=module_parameter_scale[0][3][15-y-1];
-	break;
-      default:
-	break;
-      }
-      
+
+    switch(x) {
+    case 0:
+      /* invert column's led position,offset by 1, translate value */
+      update_modulation_state(0,0,15-y-1);
       if(edit_module)
-	monome_edit_delay_handler(0);
+        module_parameter[0][0]=module_parameter_scale[0][0][15-y-1];
+      break;
+    case 1:
+      update_modulation_state(0,1,15-y-1);
+      if(edit_module)
+        module_parameter[0][1]=module_parameter_scale[0][1][15-y-1];
+      break;
+    case 2:
+      update_modulation_state(0,2,15-y-1);
+      if(edit_module)
+        module_parameter[0][2]=module_parameter_scale[0][2][15-y-1];
+      break;
+    case 3:
+      update_modulation_state(0,3,15-y-1);
+      if(edit_module)
+        module_parameter[0][3]=module_parameter_scale[0][3][15-y-1];
+      break;
+    default:
+      break;
+    }
+    if(edit_module)
+      monome_edit_delay_handler(0);
+
   } else if(x>3&&x<8&&y<15) {
     if(module_parameter_led[0][1][x-4]!=y+1) {
       module_parameter_led[0][1][x-4]=y+1;
@@ -603,7 +603,7 @@ handle_press(const monome_event_t *e, void *data)
     }
 
     x -= 4;
-    
+
     /* delay module, dsp module no 1 */
     switch(x) {
     case 0:
@@ -639,34 +639,34 @@ handle_press(const monome_event_t *e, void *data)
     }
 
     x -= 8;
-    
+
     /* delay module, dsp module no 2 */
     switch(x) {
     case 0:
       /* invert column's led position,offset by 1, translate value */
       update_modulation_state(2,0,15-y-1);
-      if(edit_module) 
+      if(edit_module)
 	module_parameter[2][0]=module_parameter_scale[2][0][15-y-1];
       break;
     case 1:
       update_modulation_state(2,1,15-y-1);
-      if(edit_module) 
+      if(edit_module)
 	module_parameter[2][1]=module_parameter_scale[2][1][15-y-1];
       break;
     case 2:
       update_modulation_state(2,2,15-y-1);
-      if(edit_module) 
+      if(edit_module)
 	module_parameter[2][2]=module_parameter_scale[2][2][15-y-1];
       break;
     case 3:
       update_modulation_state(2,3,15-y-1);
-      if(edit_module) 
+      if(edit_module)
 	module_parameter[2][3]=module_parameter_scale[2][3][15-y-1];
       break;
     default:
       break;
     }
-    if(edit_module) 
+    if(edit_module)
       monome_edit_delay_handler(2);
   } else if(x>11&&x<16&&y<15) {
     if(module_parameter_led[0][3][x-12]!=y+1) {
@@ -675,7 +675,7 @@ handle_press(const monome_event_t *e, void *data)
     }
 
     x -= 12;
-    
+
     /* delay module, dsp module no 3 */
     switch(x) {
     case 0:
@@ -705,7 +705,7 @@ handle_press(const monome_event_t *e, void *data)
     if(edit_module)
       monome_edit_delay_handler(3);
   }
-  
+
 } /* handle_press */
 
 void
@@ -751,7 +751,7 @@ handle_lift(const monome_event_t *e, void *data)
       fprintf(stderr,"record off\n");
       modulated_parameters[3][x].enable_record = 0;
     }
-  
+
 } /* handle_lift */
 
 
@@ -767,7 +767,7 @@ int generic_handler(const char *path, const char *types, lo_arg ** argv,
                     int argc, void *data, void *user_data)
 {
   int i;
-  
+
   fprintf(stdout,"path: <%s>\n", path);
   for (i = 0; i < argc; i++) {
     fprintf(stderr,"arg %d '%c' ", i, types[i]);
@@ -783,14 +783,14 @@ int osc_add_delay_handler(const char *path, const char *types, lo_arg ** argv,
   float amt;
   float time;
   float feedback;
-  
+
   fprintf(stdout, "path: <%s>\n", path);
   amt=argv[0]->f;
   time=argv[1]->f;
   feedback=argv[2]->f;
-  
+
   fprintf(stderr, "creating delay with amount %f, time %f seconds, and feedback %f..\n",amt,time,feedback);
-  
+
   return 0;
 } /* osc_add_delay_handler */
 
@@ -802,17 +802,17 @@ osc_edit_delay_handler(const char *path, const char *types, lo_arg ** argv,
   float amt;
   float time;
   float feedback;
-  
+
   fprintf(stdout, "path: <%s>\n", path);
   module_no=argv[0]->i;
   amt=argv[1]->f;
   time=argv[2]->f;
   feedback=argv[3]->f;
-  
+
   fprintf(stderr, "module_no %d, editing delay of amount %f, time %f seconds, and feedback %f..\n",module_no,amt,time,feedback);
 
   /* dsp_edit_delay(module_no,amt,time,feedback); */
-      
+
 
   return 0;
 } /* osc_edit_delay_handler */
@@ -853,7 +853,7 @@ int osc_list_bus_port_handler(const char *path, const char *types, lo_arg **argv
 
 int osc_add_module_delay_handler(const char *path, const char *types, lo_arg **argv,
 				    int argc, void *data, void *user_data)
-{ 
+{
   char *delay_id = argv[0];
   incoming_message = malloc(sizeof(char) * (strlen(delay_id) + 1));
   strcpy(incoming_message, delay_id);
@@ -870,7 +870,37 @@ int osc_edit_module_delay_handler(const char *path, const char *types, lo_arg **
 } /* osc_edit_module_delay_handler */
 
 
-int main(void)
+void print_usage() {
+  printf("Usage: peatlands [options] [arg]\n\n");
+  printf("Options:\n"
+	 " -h,  --help          displays this menu\n"
+	 " -i,  --input         input channels.  default: 8\n"
+	 " -o,  --output        output channels. default: 8\n"
+	 " -b,  --bitdepth      set bitdepth of capture to 8, 16, 24, 32, 64, or 128. default: 24\n"
+	 " -p,  --port          set osc interface receiving port. default: 97211\n"
+	 " -sp, --send-port     set osc interface sending port. default: 97217\n"
+	 " -f,  --file          set path of session file to load preexisting sounds.\n"
+	 " -fi, --fifo-size     set fifo buffer size for each channel. default: 2048\n\n"
+	 "documentation available soon\n\n");
+} /* print_usage */
+
+void print_header(void) {
+  printf("\n\n"
+	 "welcome to the\n"
+         "██▓███  ▓█████ ▄▄▄     ▄▄▄█████▓ ██▓    ▄▄▄       ███▄    █ ▓█████▄   ██████  \n"
+         "▓██░  ██▒▓█   ▀▒████▄   ▓  ██▒ ▓▒▓██▒   ▒████▄     ██ ▀█   █ ▒██▀ ██▌▒██    ▒ \n"
+         "▓██░ ██▓▒▒███  ▒██  ▀█▄ ▒ ▓██░ ▒░▒██░   ▒██  ▀█▄  ▓██  ▀█ ██▒░██   █▌░ ▓██▄   \n"
+         "▒██▄█▓▒ ▒▒▓█  ▄░██▄▄▄▄██░ ▓██▓ ░ ▒██░   ░██▄▄▄▄██ ▓██▒  ▐▌██▒░▓█▄   ▌  ▒   ██▒\n"
+         "▒██▒ ░  ░░▒████▒▓█   ▓██▒ ▒██▒ ░ ░██████▒▓█   ▓██▒▒██░   ▓██░░▒████▓ ▒██████▒▒\n"
+         "▒▓▒░ ░  ░░░ ▒░ ░▒▒   ▓▒█░ ▒ ░░   ░ ▒░▓  ░▒▒   ▓▒█░░ ▒░   ▒ ▒  ▒▒▓  ▒ ▒ ▒▓▒ ▒ ░\n"
+         "░▒ ░      ░ ░  ░ ▒   ▒▒ ░   ░    ░ ░ ▒  ░ ▒   ▒▒ ░░ ░░   ░ ▒░ ░ ▒  ▒ ░ ░▒  ░ ░\n"
+         "░░          ░    ░   ▒    ░        ░ ░    ░   ▒      ░   ░ ░  ░ ░  ░ ░  ░  ░  \n"
+         "            ░  ░     ░  ░            ░  ░     ░  ░         ░    ░          ░  \n"
+          "\t\ta monome frontend for audio processing via cyperus\n\n\n");
+} /* print_header */
+
+
+int main(int argc, char *argv[])
 {
   struct monome_t *monome = NULL;
 
@@ -878,11 +908,25 @@ int main(void)
   char *osc_port_out = "97211";
 
   lo_addr_send = lo_address_new("127.0.0.1",osc_port_out);
-  
+
   lo_server_thread st = lo_server_thread_new(osc_port_in, error);
   /* add method that will match any path and args */
   /* lo_server_thread_add_method(st, NULL, NULL, generic_handler, NULL); */
+
+  int exit_key;
   
+  if( argc > 1 )
+    if( !strcmp(argv[1], "-h") ||
+	!strcmp(argv[1], "--help") ) {
+      printf("welcome to the cyperus realtime music system\n\n");
+      print_usage();
+      exit(0);
+    }
+  
+  print_header();
+
+
+
   /* non-generic methods */
   lo_server_thread_add_method(st, "/cyperus/list/main", "s", osc_list_main_handler, NULL);
   lo_server_thread_add_method(st, "/cyperus/list/bus", "siis", osc_list_single_bus_handler, NULL);
@@ -890,11 +934,11 @@ int main(void)
 
   lo_server_thread_add_method(st, "/cyperus/add/module/delay", "sfff", osc_add_module_delay_handler, NULL);
   lo_server_thread_add_method(st, "/cyperus/edit/module/delay", "sfff", osc_edit_module_delay_handler, NULL);
-  
+
   lo_server_thread_start(st);
-  
+
   char monome_device_addr[128] = MONOME_DEVICE;
-  
+
   monome = monome_open(MONOME_DEVICE, "8002");
 
   /* clear monome LEDs */
@@ -904,11 +948,11 @@ int main(void)
    and maintaining state */
   monome_register_handler(monome, MONOME_BUTTON_DOWN, handle_press, NULL);
   monome_register_handler(monome, MONOME_BUTTON_UP, handle_lift, NULL);
-  
+
   pthread_t monome_thread_id;
   pthread_create(&monome_thread_id, NULL, monome_thread, monome);
   pthread_detach(monome_thread_id);
-  
+
   /* begin 'state manager' thread */
   pthread_t state_thread_id;
   pthread_t clock_thread_id;
