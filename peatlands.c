@@ -23,7 +23,11 @@ Copyright 2019 murray foster */
 #include <math.h>
 #include <lo/lo.h>
 #include <monome.h>
+#include <pthread.h>
 #include <signal.h>
+#include <unistd.h>
+
+
 
 /* current state of monome grid */
 unsigned int grid[16][16] = { [0 ... 15][0 ... 15] = 0 };
@@ -36,6 +40,10 @@ char *monome_device_type;
 int monome_serialosc_port = 0;
 
 lo_address lo_addr_send;
+
+lo_address t;
+
+char *incoming_message;
 
 /* MODULE MAX NO */
 #define MAXMODULES 4
@@ -103,6 +111,8 @@ float module_parameter_scale[MAXMODULES][MAXMODULEPARAMS][MAXMODULEPARAMSRES] = 
   }
 };
 
+
+
 void *
 column_rampup(monome_t *monome, int column, int floor, int ceiling)
 {
@@ -163,6 +173,26 @@ initialize_state_variables() {
   module_parameter[3][2] = 0.5;//module_parameter_delay_scale_feedback[0];
   module_parameter[3][3] = 0.5;//module_parameter_delay_scale_filler[0];
 }
+
+
+int
+monome_edit_delay_handler(int module_no)
+{
+  float amt=module_parameter[module_no][0];
+  float time=module_parameter[module_no][1];
+  float feedback=module_parameter[module_no][2];
+  float filler=module_parameter[module_no][3];
+
+  // printf("sending /cyperus/edit/module/delay %s %s ... \n", bus_port_out_path, main_out_0);
+  // lo_send(t, "/cyperus/add/connection", "ss", bus_port_out_path, main_out_0);
+  printf("sent.\n");
+  
+  /* dsp_edit_delay(module_no,amt,time,feedback); */
+
+  return 0;
+} /* monome_edit_delay_handler */
+
+
 
 void *
 clock_manager(void *arg) {
@@ -262,13 +292,186 @@ clock_manager(void *arg) {
   } while(1);
 } /* clock_manager */
 
+void
+setup_cyperus_modules_delay() {
+  char *mains_str;
+  char *main_in_0, *main_out_0;
+  char *bus_id;
+  char *bus_ports;
+  char *bus_port_in, *bus_port_out;
+  char *bus_port_in_path, *bus_port_out_path;
+  char *bus_path = NULL;
+  char *delay_id = NULL;
+  char *module_path = NULL;
+  char *module_ports = NULL;
+  char *module_port_in, *module_port_out;
+  char *module_port_in_path, *module_port_out_path;
+
+  float amt = 1.0;
+  float time = 0.75;
+  float feedback = 0.5;
+
+  int count;
+
+  printf("sending /cyperus/list/main ...\n");
+  lo_send(t, "/cyperus/list/main", NULL);
+  printf("sent.\n");
+  usleep(100);
+  mains_str = malloc(sizeof(char) * (strlen(incoming_message) + 1));
+  strcpy(mains_str, incoming_message);
+  free(incoming_message);
+
+  int out_pos;
+  char *subptr = malloc(sizeof(char) * (strlen(mains_str) + 1));
+
+  main_in_0 = malloc(sizeof(char) * 44);
+  for(count=4; count<47; count++) {
+    main_in_0[count - 4] = mains_str[count];
+  }
+
+  main_out_0 = malloc(sizeof(char) * 44);
+  subptr = strstr(mains_str, "out:");
+  out_pos = subptr - mains_str;
+  for(count=out_pos + 5; count<out_pos + 44 + 4; count++) {
+    main_out_0[count - 5 - out_pos] = mains_str[count];
+  }
+
+  printf("sending /cyperus/add/bus / main0 in out ... \n");
+  lo_send(t, "/cyperus/add/bus", "ssss", "/", "main0", "in", "out");
+  printf("sent.\n");
+  
+  printf("sending /cyperus/list/bus / 1 ... \n");
+  lo_send(t, "/cyperus/list/bus", "si", "/", 1);
+  printf("sent.\n");
+  usleep(500);
+  bus_id = malloc(sizeof(char) * (strlen(incoming_message) + 1));
+  strcpy(bus_id, incoming_message);
+  free(incoming_message);
+
+  bus_path = malloc(sizeof(char) * 38);
+  bus_path[0] = '/';
+  for(count=0; count < 37; count++)
+    bus_path[count+1] = bus_id[count];
+  bus_path[count] = '\0';
+  
+  printf("sending /cyperus/list/bus_port %s ... \n", bus_path);
+  lo_send(t, "/cyperus/list/bus_port", "s", bus_path);
+  printf("sent.\n");
+  usleep(500);
+  bus_ports = malloc(sizeof(char) * (strlen(incoming_message) + 1));
+  strcpy(bus_ports, incoming_message);
+  free(incoming_message);
+
+  bus_port_in = malloc(sizeof(char) * 37);
+  for(count=4; count<40; count++) {
+    bus_port_in[count - 4] = bus_ports[count];
+  }
+
+  subptr = malloc(sizeof(char) * (strlen(bus_ports) + 1));
+  subptr = strstr(bus_ports, "out:");
+  out_pos = subptr - bus_ports;
+  bus_port_out = malloc(sizeof(char) * 37);
+  for(count=out_pos+5; count<out_pos+36+5; count++) {
+    bus_port_out[count - 5 - out_pos] = bus_ports[count];
+  }
+
+  bus_port_in_path = malloc(sizeof(char) * (36 * 2 + 2));
+  bus_port_out_path = malloc(sizeof(char) * (36 * 2 + 2));
+
+  strcpy(bus_port_in_path, bus_path);
+  strcat(bus_port_in_path, ":");
+  strcat(bus_port_in_path, bus_port_in);
+  strcpy(bus_port_out_path, bus_path);
+  strcat(bus_port_out_path, ":");
+  strcat(bus_port_out_path, bus_port_out);
+
+  printf("sending /cyperus/add/module/delay %s %f %f %f ... \n", bus_path, amt, time, feedback);
+  lo_send(t, "/cyperus/add/module/delay", "sfff", bus_path, amt, time, feedback);
+  printf("sent.\n");
+  sleep(1);
+  delay_id = malloc(sizeof(char) * (strlen(incoming_message) + 1));
+  strcpy(delay_id, incoming_message);
+  free(incoming_message);
+
+  printf("delay_id: %s\n", delay_id);
+  
+  module_path = malloc(sizeof(char) * (strlen(bus_path) + 38));
+  strcpy(module_path, bus_path);
+  strcat(module_path, "?");
+  strcat(module_path, delay_id);
+  
+  printf("sending /cyperus/list/module_port %s ... \n", module_path);
+  lo_send(t, "/cyperus/list/module_port", "s", module_path);
+  printf("sent.\n");
+  usleep(500);
+  module_ports = malloc(sizeof(char) * (strlen(incoming_message) + 1));
+  strcpy(module_ports, incoming_message);
+  free(incoming_message);
+
+  printf("module_ports: %s\n", module_ports);
+  /* add delay and associated ports */
+  
+  module_port_in = malloc(sizeof(char) * 37);
+  for(count=4; count<40; count++) {
+    module_port_in[count - 4] = module_ports[count];
+  }
+  
+  subptr = malloc(sizeof(char) * (strlen(module_ports) + 1));
+  subptr = strstr(module_ports, "out:");
+  out_pos = subptr - module_ports;
+  module_port_out = malloc(sizeof(char) * 37);
+  for(count=out_pos+5; count<out_pos+36+5; count++) {
+    module_port_out[count - 5 - out_pos] = module_ports[count];
+  }
+
+  module_port_in_path = malloc(sizeof(char) * (36 * 3 + 3));
+  module_port_out_path = malloc(sizeof(char) * (36 * 3 + 3));
+
+  strcpy(module_port_in_path, module_path);
+  strcat(module_port_in_path, "<");
+  strcat(module_port_in_path, module_port_in);
+  strcpy(module_port_out_path, module_path);
+  strcat(module_port_out_path, ">");
+  strcat(module_port_out_path, module_port_out);
+
+  printf("module_port_in_path: %s\n", module_port_in_path);
+  printf("module_port_out_path: %s\n", module_port_out_path);
+  
+  
+  printf("sending /cyperus/add/connection %s %s ... \n", main_in_0, bus_port_in_path);
+  lo_send(t, "/cyperus/add/connection", "ss", main_in_0, bus_port_in_path);
+  printf("sent.\n");
+  
+  printf("sending /cyperus/add/connection %s %s ... \n", bus_port_in_path, module_port_in_path);
+  lo_send(t, "/cyperus/add/connection", "ss", bus_port_in_path, module_port_in_path);
+  printf("sent.\n");
+
+  printf("sending /cyperus/add/connection %s %s ... \n", module_port_out_path, bus_port_out_path);
+  lo_send(t, "/cyperus/add/connection", "ss", module_port_out_path, bus_port_out_path);
+  printf("sent.\n");
+  
+  printf("sending /cyperus/add/connection %s %s ... \n", bus_port_out_path, main_out_0);
+  lo_send(t, "/cyperus/add/connection", "ss", bus_port_out_path, main_out_0);
+  printf("sent.\n");
+
+  free(bus_id);
+  free(bus_path);
+  free(bus_ports);
+  free(bus_port_in);
+  free(bus_port_out);
+  free(bus_port_in_path);
+  free(bus_port_out_path);
+  free(main_in_0);
+  free(main_out_0);
+  free(mains_str);
+
+} /* setup_modules_delay */
+
 void *
-state_manager(void *arg)
-{
-  monome_add_delay_handler();
-  monome_add_delay_handler();
-  monome_add_delay_handler();
-  monome_add_delay_handler();
+state_manager(void *arg) {
+
+  setup_cyperus_modules_delay();
+  
   initialize_state_variables();
   
   struct monome_t *monome = arg;
@@ -357,7 +560,7 @@ handle_press(const monome_event_t *e, void *data)
     module_bypass[3]=!module_bypass[3];
     dsp_bypass(3,module_bypass[3]);
   }
-  
+
   if(x>=0&&x<4&&y<15) {
     if(module_parameter_led[0][0][x]!=y+1) { /* offset y by 1 so zero-indexes don't
 					 logically translate to false */
@@ -574,131 +777,6 @@ int generic_handler(const char *path, const char *types, lo_arg ** argv,
   return 0;
 }
 
-int osc_add_sine_handler(const char *path, const char *types, lo_arg ** argv,
-		     int argc, void *data, void *user_data)
-{
-  float freq;
-  float amp;
-  
-  fprintf(stdout, "path: <%s>\n", path);
-  freq=argv[0]->f;
-  amp=argv[1]->f;
-
-  fprintf(stderr, "creating sine wave at freq %f and amp %f..\n",freq,amp);
-  
-  /* add sine() function from libcyperus onto correct voice/signal chain */
-  dsp_create_sine(freq,amp);
-  
-  return 0;
-} /* osc_create_sine_handler */
-
-int osc_edit_sine_handler(const char *path, const char *types, lo_arg ** argv,
-		     int argc, void *data, void *user_data)
-{
-  int module_no;
-  float freq;
-  float amp;
-  
-  fprintf(stdout, "path: <%s>\n", path);
-  module_no=argv[0]->i;
-  freq=argv[1]->f;
-  amp=argv[2]->f;
-
-  fprintf(stderr, "module_no %d, editing sine wave to freq %f and amp %f..\n",module_no,freq,amp);
-  
-  /* add sine() function from libcyperus onto correct voice/signal chain */
-  dsp_edit_sine(module_no,freq,amp);
-  
-  return 0;
-} /* osc_edit_sine_handler */
-
-int osc_add_square_handler(const char *path, const char *types, lo_arg ** argv,
-		     int argc, void *data, void *user_data)
-{
-  float freq;
-  float amp;
-  
-  fprintf(stdout, "path: <%s>\n", path);
-  freq=argv[0]->f;
-  amp=argv[1]->f;
-
-  fprintf(stderr, "creating square wave at freq %f and amp %f..\n",freq,amp);
-  
-  dsp_create_square(freq,amp);
-  
-  return 0;
-} /* osc_create_square_handler */
-
-int osc_edit_square_handler(const char *path, const char *types, lo_arg ** argv,
-		     int argc, void *data, void *user_data)
-{
-  int module_no;
-  float freq;
-  float amp;
-  
-  fprintf(stdout, "path: <%s>\n", path);
-  module_no=argv[0]->i;
-  freq=argv[1]->f;
-  amp=argv[2]->f;
-
-  fprintf(stderr, "module_no %d, editing square wave to freq %f and amp %f..\n",module_no,freq,amp);
-  
-  dsp_edit_square(module_no,freq,amp);
-  
-  return 0;
-} /* osc_edit_square_handler */
-
-int osc_add_pinknoise_handler(const char *path, const char *types, lo_arg ** argv,
-		     int argc, void *data, void *user_data)
-{
-  
-  fprintf(stdout, "path: <%s>\n", path);
-
-  fprintf(stderr, "creating pink noise..\n");
-  
-  /* add pinknoise() function from libcyperus onto correct voice/signal chain */
-  dsp_create_pinknoise();
-  
-  return 0;
-} /* osc_add_pinknoise_handler */
-
-
-int osc_add_butterworth_biquad_lowpass_handler(const char *path, const char *types, lo_arg ** argv,
-		     int argc, void *data, void *user_data)
-{
-  float cutoff;
-  float res;
-  
-  fprintf(stdout, "path: <%s>\n", path);
-  cutoff=argv[0]->f;
-  res=argv[1]->f;
-
-  fprintf(stderr, "creating butterworth biquad lowpass filter at freq cutoff %f and resonance %f..\n",cutoff,res);
-  
-  dsp_create_butterworth_biquad_lowpass(cutoff,res);
-  
-  return 0;
-} /* osc_create_butterworth_biquad_lowpass_handler */
-
-int osc_edit_butterworth_biquad_lowpass_handler(const char *path, const char *types, lo_arg ** argv,
-		     int argc, void *data, void *user_data)
-{
-  int module_no;
-  float cutoff;
-  float res;
-  
-  fprintf(stdout, "path: <%s>\n", path);
-  module_no=argv[0]->i;
-  cutoff=argv[1]->f;
-  res=argv[2]->f;
-
-  fprintf(stderr, "module_no %d, editing butterworth biquad lowpass filter at cutoff freq %f and resonance %f..\n",module_no,cutoff,res);
-  
-  dsp_edit_butterworth_biquad_lowpass(module_no,cutoff,res);
-  
-  return 0;
-} /* osc_edit_butterworth_biquad_lowpass_handler */
-
 int osc_add_delay_handler(const char *path, const char *types, lo_arg ** argv,
 		     int argc, void *data, void *user_data)
 {
@@ -713,26 +791,8 @@ int osc_add_delay_handler(const char *path, const char *types, lo_arg ** argv,
   
   fprintf(stderr, "creating delay with amount %f, time %f seconds, and feedback %f..\n",amt,time,feedback);
   
-  dsp_create_delay(amt,time,feedback);
-  
   return 0;
 } /* osc_add_delay_handler */
-
-int
-monome_add_delay_handler()
-{
-  float amt;
-  float time;
-  float feedback;
-  
-  amt=0.5;
-  time=0.5;
-  feedback=0.5;
-  
-  dsp_create_delay(amt,time,feedback);
-  
-  return 0;
-} /* monome_add_delay_handler */
 
 int
 osc_edit_delay_handler(const char *path, const char *types, lo_arg ** argv,
@@ -750,99 +810,65 @@ osc_edit_delay_handler(const char *path, const char *types, lo_arg ** argv,
   feedback=argv[3]->f;
   
   fprintf(stderr, "module_no %d, editing delay of amount %f, time %f seconds, and feedback %f..\n",module_no,amt,time,feedback);
-  
-  dsp_edit_delay(module_no,amt,time,feedback);
-  
+
+  /* dsp_edit_delay(module_no,amt,time,feedback); */
+      
+
   return 0;
 } /* osc_edit_delay_handler */
 
-int
-monome_edit_delay_handler(int module_no)
+int osc_list_main_handler(const char *path, const char *types, lo_arg **argv,
+			   int argc, void *data, void *user_data)
 {
-  float amt=module_parameter[module_no][0];
-  float time=module_parameter[module_no][1];
-  float feedback=module_parameter[module_no][2];
-  float filler=module_parameter[module_no][3];
-  
-  dsp_edit_delay(module_no,amt,time,feedback);
-
+  char *msg_str = argv[0];
+  incoming_message = malloc(sizeof(char) * (strlen(msg_str) + 1));
+  strcpy(incoming_message, msg_str);
   return 0;
-} /* monome_edit_delay_handler */
+} /* osc_list_main_handler */
 
-int
-osc_add_vocoder_handler(const char *path, const char *types, lo_arg ** argv,
-		     int argc, void *data, void *user_data)
+
+int osc_list_single_bus_handler(const char *path, const char *types, lo_arg **argv,
+			 int argc, void *data, void *user_data)
 {
-  float freq;
-  float amp;
-
-  freq=argv[0]->f;
-  amp=argv[1]->f;
-  
-  fprintf(stdout, "path: <%s>\n", path);  
-  fprintf(stderr, "creating vocoder..\n");
-
-  dsp_create_vocoder(freq,amp);
-  
+  char *bus_path = argv[0];
+  int list_type = argv[1]->i;
+  int more = argv[2]->i;
+  char *result_str = argv[3];
+  incoming_message = malloc(sizeof(char) * (strlen(result_str) + 1));
+  strcpy(incoming_message, result_str);
   return 0;
-} /* osc_add_vocoder_handler */
+} /* osc_list_single_bus_handler */
 
-int
-osc_edit_vocoder_handler(const char *path, const char *types, lo_arg ** argv,
-		     int argc, void *data, void *user_data)
+
+int osc_list_bus_port_handler(const char *path, const char *types, lo_arg **argv,
+				     int argc, void *data, void *user_data)
 {
-  int module_no;
-  float freq;
-  float amp;
-  
-  fprintf(stdout, "path: <%s>\n", path);
-  module_no=argv[0]->i;
-  freq=argv[1]->f;
-  amp=argv[2]->f;
-  
-  fprintf(stderr, "module_no %d, editing vocoder freq %f amp %f..\n",module_no,freq,amp);
-  
-  dsp_edit_vocoder(module_no,freq,amp);
-  
+  char *bus_port_path_str = argv[0];
+  char *result_str = argv[1];
+  incoming_message = malloc(sizeof(char) * (strlen(result_str) + 1));
+  strcpy(incoming_message, result_str);
   return 0;
-} /* osc_edit_vocoder_handler */
+} /* osc_list_bus_port_handler */
 
-int osc_remove_module_handler(const char *path, const char *types, lo_arg ** argv,
-			      int argc, void *data, void *user_data)
+
+int osc_add_module_delay_handler(const char *path, const char *types, lo_arg **argv,
+				    int argc, void *data, void *user_data)
+{ 
+  char *delay_id = argv[0];
+  incoming_message = malloc(sizeof(char) * (strlen(delay_id) + 1));
+  strcpy(incoming_message, delay_id);
+  return 0;
+} /* osc_add_module_delay_handler */
+
+int osc_edit_module_delay_handler(const char *path, const char *types, lo_arg **argv,
+				    int argc, void *data, void *user_data)
 {
-  int voice;
-  int module_no;
-  
-  fprintf(stdout, "path: <%s>\n", path);
-  module_no=argv[0]->i;
-
-  fprintf(stderr, "removing module #%d..\n",module_no);
-  
-  dsp_remove_module(0,module_no);
-  
+  char *delay_id = argv[0];
+  incoming_message = malloc(sizeof(char) * (strlen(delay_id) + 1));
+  strcpy(incoming_message, delay_id);
   return 0;
-} /* osc_remove_module_handler */
+} /* osc_edit_module_delay_handler */
 
-int osc_list_modules_handler(const char *path, const char *types, lo_arg ** argv,
-			     int argc, void *data, void *user_data)
-{
-  int voice_no;
-  char *module_list;
-  char return_string[100];
-  
-  fprintf(stdout, "path: <%s>\n", path);
-  voice_no=argv[0]->i;
-
-  module_list = dsp_list_modules(voice_no);
-  
-  fprintf(stderr, "listing modules for voice #%d..\n",voice_no);
-
-  lo_send(lo_addr_send,"/cyperus/list","s",module_list);
-
-  free(module_list);
-  return 0;
-  
-} /* osc_list_modules_handler */
 
 int main(void)
 {
@@ -858,26 +884,13 @@ int main(void)
   /* lo_server_thread_add_method(st, NULL, NULL, generic_handler, NULL); */
   
   /* non-generic methods */
-  lo_server_thread_add_method(st, "/cyperus/remove", "i", osc_remove_module_handler, NULL);
-  lo_server_thread_add_method(st, "/cyperus/list", "i", osc_list_modules_handler, NULL);
+  lo_server_thread_add_method(st, "/cyperus/list/main", "s", osc_list_main_handler, NULL);
+  lo_server_thread_add_method(st, "/cyperus/list/bus", "siis", osc_list_single_bus_handler, NULL);
+  lo_server_thread_add_method(st, "/cyperus/list/bus_port", "ss", osc_list_bus_port_handler, NULL);
+
+  lo_server_thread_add_method(st, "/cyperus/add/module/delay", "sfff", osc_add_module_delay_handler, NULL);
+  lo_server_thread_add_method(st, "/cyperus/edit/module/delay", "sfff", osc_edit_module_delay_handler, NULL);
   
-  lo_server_thread_add_method(st, "/cyperus/add/sine", "ff", osc_add_sine_handler, NULL);
-  lo_server_thread_add_method(st, "/cyperus/edit/sine", "iff", osc_edit_sine_handler, NULL);
-
-  lo_server_thread_add_method(st, "/cyperus/add/square", "ff", osc_add_square_handler, NULL);
-  lo_server_thread_add_method(st, "/cyperus/edit/square", "iff", osc_edit_square_handler, NULL);
-  
-  lo_server_thread_add_method(st, "/cyperus/add/pinknoise", NULL, osc_add_pinknoise_handler, NULL);
-
-  lo_server_thread_add_method(st, "/cyperus/add/butterworth_biquad_lowpass", "ff", osc_add_butterworth_biquad_lowpass_handler, NULL);
-  lo_server_thread_add_method(st, "/cyperus/edit/butterworth_biquad_lowpass", "iff", osc_edit_butterworth_biquad_lowpass_handler, NULL);
-
-  lo_server_thread_add_method(st, "/cyperus/add/delay", "fff", osc_add_delay_handler, NULL);
-  lo_server_thread_add_method(st, "/cyperus/edit/delay", "ifff", osc_edit_delay_handler, NULL);
-
-  lo_server_thread_add_method(st, "/cyperus/add/vocoder", "ff", osc_add_vocoder_handler, NULL);
-  lo_server_thread_add_method(st, "/cyperus/edit/vocoder", "iff", osc_edit_vocoder_handler, NULL);
-
   lo_server_thread_start(st);
   
   char monome_device_addr[128] = MONOME_DEVICE;
