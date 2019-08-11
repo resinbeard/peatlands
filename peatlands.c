@@ -41,9 +41,7 @@ int monome_serialosc_port = 0;
 
 lo_address lo_addr_send;
 
-lo_address t;
-
-char *incoming_message;
+char *incoming_message = NULL;
 
 /* MODULE MAX NO */
 #define MAXMODULES 4
@@ -184,7 +182,7 @@ monome_edit_delay_handler(int module_no)
   float filler=module_parameter[module_no][3];
 
   // printf("sending /cyperus/edit/module/delay %s %s ... \n", bus_port_out_path, main_out_0);
-  // lo_send(t, "/cyperus/add/connection", "ss", bus_port_out_path, main_out_0);
+  // lo_send(lo_addr_send, "/cyperus/add/connection", "ss", bus_port_out_path, main_out_0);
   printf("sent.\n");
 
   /* dsp_edit_delay(module_no,amt,time,feedback); */
@@ -314,13 +312,23 @@ setup_cyperus_modules_delay() {
   int count;
 
   printf("sending /cyperus/list/main ...\n");
-  lo_send(t, "/cyperus/list/main", NULL);
-  printf("sent.\n");
-  usleep(100);
+  lo_send(lo_addr_send, "/cyperus/list/main", NULL);
+  printf("sent /cyperus/list/main\n");
+  while(incoming_message == NULL)
+    usleep(100);
+  printf("about to strlen()\n");
+  printf("strlen(incoming_message): %d\n", strlen(incoming_message));
+  printf("post-sleep\n");
   mains_str = malloc(sizeof(char) * (strlen(incoming_message) + 1));
+  printf("allocating for mains_str\n");
   strcpy(mains_str, incoming_message);
+  printf("strcpy(mains_str, incoming_message)\n");
   free(incoming_message);
+  printf("free() incoming_message\n");
+  incoming_message = NULL;
 
+  printf("process list/main done.\n");
+  
   int out_pos;
   char *subptr = malloc(sizeof(char) * (strlen(mains_str) + 1));
 
@@ -335,18 +343,19 @@ setup_cyperus_modules_delay() {
   for(count=out_pos + 5; count<out_pos + 44 + 4; count++) {
     main_out_0[count - 5 - out_pos] = mains_str[count];
   }
-
+  
   printf("sending /cyperus/add/bus / main0 in out ... \n");
-  lo_send(t, "/cyperus/add/bus", "ssss", "/", "main0", "in", "out");
+  lo_send(lo_addr_send, "/cyperus/add/bus", "ssss", "/", "main0", "in", "out");
   printf("sent.\n");
 
   printf("sending /cyperus/list/bus / 1 ... \n");
-  lo_send(t, "/cyperus/list/bus", "si", "/", 1);
+  lo_send(lo_addr_send, "/cyperus/list/bus", "si", "/", 1);
   printf("sent.\n");
   usleep(500);
   bus_id = malloc(sizeof(char) * (strlen(incoming_message) + 1));
   strcpy(bus_id, incoming_message);
   free(incoming_message);
+  incoming_message = NULL;
 
   bus_path = malloc(sizeof(char) * 38);
   bus_path[0] = '/';
@@ -355,13 +364,14 @@ setup_cyperus_modules_delay() {
   bus_path[count] = '\0';
 
   printf("sending /cyperus/list/bus_port %s ... \n", bus_path);
-  lo_send(t, "/cyperus/list/bus_port", "s", bus_path);
+  lo_send(lo_addr_send, "/cyperus/list/bus_port", "s", bus_path);
   printf("sent.\n");
   usleep(500);
   bus_ports = malloc(sizeof(char) * (strlen(incoming_message) + 1));
   strcpy(bus_ports, incoming_message);
   free(incoming_message);
-
+  incoming_message = NULL;
+  
   bus_port_in = malloc(sizeof(char) * 37);
   for(count=4; count<40; count++) {
     bus_port_in[count - 4] = bus_ports[count];
@@ -386,13 +396,14 @@ setup_cyperus_modules_delay() {
   strcat(bus_port_out_path, bus_port_out);
 
   printf("sending /cyperus/add/module/delay %s %f %f %f ... \n", bus_path, amt, time, feedback);
-  lo_send(t, "/cyperus/add/module/delay", "sfff", bus_path, amt, time, feedback);
+  lo_send(lo_addr_send, "/cyperus/add/module/delay", "sfff", bus_path, amt, time, feedback);
   printf("sent.\n");
   sleep(1);
   delay_id = malloc(sizeof(char) * (strlen(incoming_message) + 1));
   strcpy(delay_id, incoming_message);
   free(incoming_message);
-
+  incoming_message = NULL;
+  
   printf("delay_id: %s\n", delay_id);
 
   module_path = malloc(sizeof(char) * (strlen(bus_path) + 38));
@@ -401,12 +412,14 @@ setup_cyperus_modules_delay() {
   strcat(module_path, delay_id);
 
   printf("sending /cyperus/list/module_port %s ... \n", module_path);
-  lo_send(t, "/cyperus/list/module_port", "s", module_path);
+  lo_send(lo_addr_send, "/cyperus/list/module_port", "s", module_path);
   printf("sent.\n");
-  usleep(500);
+  while( incoming_message == NULL )
+    usleep(500);
+  printf("got module_ports\n");
+  printf("incoming_message: %s\n", incoming_message);
   module_ports = malloc(sizeof(char) * (strlen(incoming_message) + 1));
   strcpy(module_ports, incoming_message);
-  free(incoming_message);
 
   printf("module_ports: %s\n", module_ports);
   /* add delay and associated ports */
@@ -439,19 +452,19 @@ setup_cyperus_modules_delay() {
 
 
   printf("sending /cyperus/add/connection %s %s ... \n", main_in_0, bus_port_in_path);
-  lo_send(t, "/cyperus/add/connection", "ss", main_in_0, bus_port_in_path);
+  lo_send(lo_addr_send, "/cyperus/add/connection", "ss", main_in_0, bus_port_in_path);
   printf("sent.\n");
 
   printf("sending /cyperus/add/connection %s %s ... \n", bus_port_in_path, module_port_in_path);
-  lo_send(t, "/cyperus/add/connection", "ss", bus_port_in_path, module_port_in_path);
+  lo_send(lo_addr_send, "/cyperus/add/connection", "ss", bus_port_in_path, module_port_in_path);
   printf("sent.\n");
 
   printf("sending /cyperus/add/connection %s %s ... \n", module_port_out_path, bus_port_out_path);
-  lo_send(t, "/cyperus/add/connection", "ss", module_port_out_path, bus_port_out_path);
+  lo_send(lo_addr_send, "/cyperus/add/connection", "ss", module_port_out_path, bus_port_out_path);
   printf("sent.\n");
 
   printf("sending /cyperus/add/connection %s %s ... \n", bus_port_out_path, main_out_0);
-  lo_send(t, "/cyperus/add/connection", "ss", bus_port_out_path, main_out_0);
+  lo_send(lo_addr_send, "/cyperus/add/connection", "ss", bus_port_out_path, main_out_0);
   printf("sent.\n");
 
   free(bus_id);
@@ -777,46 +790,6 @@ int generic_handler(const char *path, const char *types, lo_arg ** argv,
   return 0;
 }
 
-int osc_add_delay_handler(const char *path, const char *types, lo_arg ** argv,
-		     int argc, void *data, void *user_data)
-{
-  float amt;
-  float time;
-  float feedback;
-
-  fprintf(stdout, "path: <%s>\n", path);
-  amt=argv[0]->f;
-  time=argv[1]->f;
-  feedback=argv[2]->f;
-
-  fprintf(stderr, "creating delay with amount %f, time %f seconds, and feedback %f..\n",amt,time,feedback);
-
-  return 0;
-} /* osc_add_delay_handler */
-
-int
-osc_edit_delay_handler(const char *path, const char *types, lo_arg ** argv,
-		     int argc, void *data, void *user_data)
-{
-  int module_no;
-  float amt;
-  float time;
-  float feedback;
-
-  fprintf(stdout, "path: <%s>\n", path);
-  module_no=argv[0]->i;
-  amt=argv[1]->f;
-  time=argv[2]->f;
-  feedback=argv[3]->f;
-
-  fprintf(stderr, "module_no %d, editing delay of amount %f, time %f seconds, and feedback %f..\n",module_no,amt,time,feedback);
-
-  /* dsp_edit_delay(module_no,amt,time,feedback); */
-
-
-  return 0;
-} /* osc_edit_delay_handler */
-
 int osc_list_main_handler(const char *path, const char *types, lo_arg **argv,
 			   int argc, void *data, void *user_data)
 {
@@ -860,6 +833,20 @@ int osc_add_module_delay_handler(const char *path, const char *types, lo_arg **a
   return 0;
 } /* osc_add_module_delay_handler */
 
+
+int osc_list_module_port_handler(const char *path, const char *types, lo_arg **argv,
+				 int argc, void *data, void *user_data)
+{
+  char *module_path_str = argv[0];
+  char *result_str = argv[1];
+
+  printf("osc_lust_module_port_handler(): path(): %s\n", path);
+  
+  incoming_message = malloc(sizeof(char) * (strlen(result_str) + 1));
+  strcpy(incoming_message, result_str);
+  return 0;
+} /* osc_list_module_port_handler */
+
 int osc_edit_module_delay_handler(const char *path, const char *types, lo_arg **argv,
 				    int argc, void *data, void *user_data)
 {
@@ -868,7 +855,6 @@ int osc_edit_module_delay_handler(const char *path, const char *types, lo_arg **
   strcpy(incoming_message, delay_id);
   return 0;
 } /* osc_edit_module_delay_handler */
-
 
 void print_usage() {
   printf("Usage: peatlands [options] [arg]\n\n");
@@ -907,14 +893,17 @@ int main(int argc, char *argv[])
   char *osc_port_in = "97217";
   char *osc_port_out = "97211";
 
-  lo_addr_send = lo_address_new("127.0.0.1",osc_port_out);
+  char *store_flag = NULL;
+  char *store_input = NULL;  
+  char *cyperus_cmd = NULL;
 
   lo_server_thread st = lo_server_thread_new(osc_port_in, error);
-  /* add method that will match any path and args */
-  /* lo_server_thread_add_method(st, NULL, NULL, generic_handler, NULL); */
 
+  int c;
   int exit_key;
   
+  lo_addr_send = lo_address_new("127.0.0.1",osc_port_out);
+
   if( argc > 1 )
     if( !strcmp(argv[1], "-h") ||
 	!strcmp(argv[1], "--help") ) {
@@ -922,87 +911,56 @@ int main(int argc, char *argv[])
       print_usage();
       exit(0);
     }
-  
-  print_header();
 
+  print_header();
+  
   /* process command-line input */
   for(c=1; c<argc; c++)
     {
       store_flag = argv[c];
       if( store_flag != NULL )
 	{
-	  if( !strcmp(store_flag,"-p") ||
-	      !strcmp(store_flag,"--port")) {
+	  if( !strcmp(store_flag,"-cy") ||
+	      !strcmp(store_flag,"--cyperus-path")) {
 	    store_input=argv[c+1];
-	    osc_port_in=store_input;
+	    cyperus_cmd=store_input;
 	  }
-
-	  if( !strcmp(store_flag,"-sp") ||
-	      !strcmp(store_flag,"--send-port")) {
-	    store_input=argv[c+1];
-	    osc_port_out=store_input;
-	  }
-	  
-	  if( !strcmp(store_flag,"-b") ||
-	      !strcmp(store_flag,"--bitdepth")) {
-	    store_input = argv[c+1];
-	    bitdepth=atoi(store_input);
-	  }
-	  
-	  if( !strcmp(store_flag,"-i") ||
-	      !strcmp(store_flag,"--input")) {
-	    store_input = argv[c+1];
-	    input=atoi(store_input);
-	  }
-
-	  if( !strcmp(store_flag,"-o") ||
-	      !strcmp(store_flag,"--output")) {
-	    store_input = argv[c+1];
-	    output=atoi(store_input);
-	  }
-	  
-	  if( !strcmp(store_flag,"-f") ||
-	      !strcmp(store_flag,"--file")) {
-	    store_input = argv[c+1];
-	    file_path=store_input;
-	  }
-	  
-	  if( !strcmp(store_flag,"-fi") ||
-	      !strcmp(store_flag,"--fifo-size")) {
-	    store_input = argv[c+1];
-	    fifo_size=atoi(store_input);
-	  }
-
+          
 	  /* reset temporarily stored flag&input */
 	  store_input=NULL;
 	  store_flag=NULL;
 	}
     }
 
+  if( cyperus_cmd == NULL )
+    cyperus_cmd="cyperus -i 4 -o 4 &";
+  
   if( osc_port_in == NULL )
     osc_port_in="97211";
-  
+
   if( osc_port_out == NULL )
     osc_port_out="97217";
 
-  printf("channels in: %d\n", input);
-  printf("channels out: %d\n", output);
-  printf("bitdepth: %dbits\n", bitdepth);
-  printf("fifo size: %d\n", fifo_size);
-  printf("osc receive port: %s\n", osc_port_in);
-  printf("osc send port: %s\n", osc_port_out);
-  printf("filepath: %s\n\n\n", file_path);
+  printf("cyperus-cmd: '%s'\n\n\n", cyperus_cmd);
+
+  system(cyperus_cmd);
+  usleep(9999);
+  
+  printf("launched\n");
   
   /* non-generic methods */
   lo_server_thread_add_method(st, "/cyperus/list/main", "s", osc_list_main_handler, NULL);
   lo_server_thread_add_method(st, "/cyperus/list/bus", "siis", osc_list_single_bus_handler, NULL);
   lo_server_thread_add_method(st, "/cyperus/list/bus_port", "ss", osc_list_bus_port_handler, NULL);
+  lo_server_thread_add_method(st, "/cyperus/list/module_port", "ss", osc_list_module_port_handler, NULL);
 
   lo_server_thread_add_method(st, "/cyperus/add/module/delay", "sfff", osc_add_module_delay_handler, NULL);
   lo_server_thread_add_method(st, "/cyperus/edit/module/delay", "sfff", osc_edit_module_delay_handler, NULL);
 
   lo_server_thread_start(st);
 
+  printf("osc started\n");
+  
   char monome_device_addr[128] = MONOME_DEVICE;
 
   monome = monome_open(MONOME_DEVICE, "8002");
