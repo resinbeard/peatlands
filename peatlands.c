@@ -185,11 +185,12 @@ monome_edit_delay_handler(int module_no)
 
   // printf("sending /cyperus/edit/module/delay %s %s ... \n", bus_port_out_path, main_out_0);
   // lo_send(lo_addr_send, "/cyperus/add/connection", "ss", bus_port_out_path, main_out_0);
+
+  printf("delay bus path: %s\n", monome_cyperus_module_ids[module_no]);
+
+  printf("sending /cyperus/edit/module/delay %s %f %f %f ... \n", monome_cyperus_module_ids[module_no], amt, time, feedback);
+  lo_send(lo_addr_send, "/cyperus/edit/module/delay", "sfff", monome_cyperus_module_ids[module_no], amt, time, feedback);
   printf("sent.\n");
-
-  /* dsp_edit_delay(module_no,amt,time,feedback); */
-
-
   
   return 0;
 } /* monome_edit_delay_handler */
@@ -554,7 +555,8 @@ setup_cyperus_modules_delay() {
 
 void *
 state_manager(void *arg) {
-
+  int count = 0;
+  
   setup_cyperus_modules_delay();
 
   initialize_state_variables();
