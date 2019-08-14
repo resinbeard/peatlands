@@ -297,7 +297,7 @@ clock_manager(void *arg) {
 } /* clock_manager */
 
 void
-setup_cyperus_modules_delay() {
+setup_cyperus_modules() {
   char *mains_str;
   char **main_ins;
   char **main_outs;
@@ -485,13 +485,13 @@ setup_cyperus_modules_delay() {
   free(bus_port_out_path);
   free(mains_str);
 
-} /* setup_cyperus_modules_delay */
+} /* setup_cyperus_modules */
 
 void *
 state_manager(void *arg) {
   int count = 0;
   
-  setup_cyperus_modules_delay();
+  setup_cyperus_modules();
 
   initialize_state_variables();
 
@@ -586,7 +586,7 @@ handle_press(const monome_event_t *e, void *data)
   } else if(x>3&&x<8&&y==15) {
     module_bypass[1]=!module_bypass[1];
 
-    if( module_bypass[0] )
+    if( module_bypass[1] )
       amt = 0.0;
     else
       amt = module_parameter[1][0];
@@ -1028,16 +1028,14 @@ int main(int argc, char *argv[])
 
   monome_device_addr = malloc(sizeof(char) * (strlen(monome_device_addr_port) + strlen(monome_device_addr_format) + 1));
   sprintf(monome_device_addr, monome_device_addr_format, monome_device_addr_port);
-  printf("monome_device_addr: %s\n", monome_device_addr);
   monome = monome_open(monome_device_addr, "8002");  
-  
-  printf("cyperus-cmd: '%s'\n\n\n", cyperus_cmd);
 
+  printf("monome address: %s\n", monome_device_addr);
+  printf("cyperus cmd: %s\n\n\n", cyperus_cmd);
+  
   cyperus_proc_handle = popen(cyperus_cmd, "r");
   handle_fileno = fileno(cyperus_proc_handle);
   fcntl(handle_fileno, F_SETFL, O_NONBLOCK);
-
-  printf("cyperus launched\n");
   
   usleep(999999);
   
