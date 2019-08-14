@@ -1,4 +1,4 @@
-/* peatlands.c
+4]/* peatlands.c
 This file is a part of 'peatlands'
 This program is free software: you can redistribute it and/or modify
 hit under the terms of the GNU General Public License as published by
@@ -282,10 +282,10 @@ clock_manager(void *arg) {
 		module_parameter[i][c] = modulated_parameters[i][c].value;
                 
                 monome_edit_delay_handler(i,
+                                          module_parameter[i][0],
                                           module_parameter[i][1],
                                           module_parameter[i][2],
-                                          module_parameter[i][3],
-                                          module_parameter[i][4]);
+                                          module_parameter[i][3]);
 
 		modulated_parameters[i][c].position += 1;
 	      }
@@ -573,7 +573,7 @@ handle_press(const monome_event_t *e, void *data)
     if( module_bypass[0] )
       amt = 0.0;
     else
-      amt = module_parameter[0][1];
+      amt = module_parameter[0][0];
     
     monome_edit_delay_handler(0,
                               amt,
@@ -588,13 +588,13 @@ handle_press(const monome_event_t *e, void *data)
     if( module_bypass[0] )
       amt = 0.0;
     else
-      amt = module_parameter[1][1];
+      amt = module_parameter[1][0];
     
     monome_edit_delay_handler(1,
                               amt,
                               module_parameter[1][1],
                               module_parameter[1][2],
-                              module_parameter[0][3]);
+                              module_parameter[1][3]);
 
   } else if(x>7&&x<12&&y==15) {
     module_bypass[2]=!module_bypass[2];
@@ -602,13 +602,13 @@ handle_press(const monome_event_t *e, void *data)
     if( module_bypass[2] )
       amt = 0.0;
     else
-      amt = module_parameter[2][1];
+      amt = module_parameter[2][0];
     
     monome_edit_delay_handler(2,
                               amt,
                               module_parameter[2][1],
                               module_parameter[2][2],
-                              module_parameter[0][3]);
+                              module_parameter[2][3]);
 
   } else if(x>11&&x<16&&y==15) {
     module_bypass[3]=!module_bypass[3];
@@ -616,13 +616,13 @@ handle_press(const monome_event_t *e, void *data)
     if( module_bypass[3] )
       amt = 0.0;
     else
-      amt = module_parameter[3][1];
+      amt = module_parameter[3][0];
     
     monome_edit_delay_handler(3,
                               amt,
                               module_parameter[3][1],
                               module_parameter[3][2],
-                              module_parameter[0][3]);
+                              module_parameter[3][3]);
 
   }
 
