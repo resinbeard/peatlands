@@ -176,13 +176,8 @@ initialize_state_variables() {
 
 
 int
-monome_edit_delay_handler(int module_no)
+monome_edit_delay_handler(int module_no, float amt, float time, float feedback, float filler)
 {
-  float amt=module_parameter[module_no][0];
-  float time=module_parameter[module_no][1];
-  float feedback=module_parameter[module_no][2];
-  float filler=module_parameter[module_no][3];
-
   // printf("sending /cyperus/edit/module/delay %s %s ... \n", bus_port_out_path, main_out_0);
   // lo_send(lo_addr_send, "/cyperus/add/connection", "ss", bus_port_out_path, main_out_0);
 
@@ -286,7 +281,13 @@ clock_manager(void *arg) {
 		   4. tentatively update our modulation's position for this parameter */
 		modulated_parameters[i][c].value = step_value;
 		module_parameter[i][c] = modulated_parameters[i][c].value;
-		monome_edit_delay_handler(i);
+                
+                monome_edit_delay_handler(i,
+                                          module_parameter[i][1],
+                                          module_parameter[i][2],
+                                          module_parameter[i][3],
+                                          module_parameter[i][4]);
+
 		modulated_parameters[i][c].position += 1;
 	      }
 	  }
@@ -558,7 +559,7 @@ void
 handle_press(const monome_event_t *e, void *data)
 {
   unsigned int x, y, i, x2, y2, button, c, edit_module;
-
+  float amt;
   x = e->grid.x;
   y = e->grid.y;
 
@@ -569,16 +570,61 @@ handle_press(const monome_event_t *e, void *data)
 
   if(x>=0&&x<4&&y==15) {
     module_bypass[0]=!module_bypass[0];
-    // dsp_bypass(0,module_bypass[0]);
+
+    if( module_bypass[0] )
+      amt = 0.0;
+    else
+      amt = module_parameter[0][1];
+    
+    monome_edit_delay_handler(0,
+                              amt,
+                              module_parameter[0][1],
+                              module_parameter[0][2],
+                              module_parameter[0][3]);
+
+
   } else if(x>3&&x<8&&y==15) {
     module_bypass[1]=!module_bypass[1];
-    // dsp_bypass(1,module_bypass[1]);
+
+    if( module_bypass[0] )
+      amt = 0.0;
+    else
+      amt = module_parameter[1][1];
+    
+    monome_edit_delay_handler(1,
+                              amt,
+                              module_parameter[1][1],
+                              module_parameter[1][2],
+                              module_parameter[0][3]);
+
   } else if(x>7&&x<12&&y==15) {
     module_bypass[2]=!module_bypass[2];
-    // dsp_bypass(2,module_bypass[2]);
+
+    if( module_bypass[2] )
+      amt = 0.0;
+    else
+      amt = module_parameter[2][1];
+    
+    monome_edit_delay_handler(2,
+                              amt,
+                              module_parameter[2][1],
+                              module_parameter[2][2],
+                              module_parameter[0][3]);
+
   } else if(x>11&&x<16&&y==15) {
     module_bypass[3]=!module_bypass[3];
-    // dsp_bypass(3,module_bypass[3]);
+
+    if( module_bypass[3] )
+      amt = 0.0;
+    else
+      amt = module_parameter[3][1];
+    
+    monome_edit_delay_handler(3,
+                              amt,
+                              module_parameter[3][1],
+                              module_parameter[3][2],
+                              module_parameter[0][3]);
+
   }
 
   if(x>=0&&x<4&&y<15) {
@@ -614,7 +660,12 @@ handle_press(const monome_event_t *e, void *data)
       break;
     }
     if(edit_module)
-      monome_edit_delay_handler(0);
+      monome_edit_delay_handler(0,
+                                module_parameter[0][0],
+                                module_parameter[0][1],
+                                module_parameter[0][2],
+                                module_parameter[0][3]);
+
 
   } else if(x>3&&x<8&&y<15) {
     if(module_parameter_led[0][1][x-4]!=y+1) {
@@ -651,7 +702,12 @@ handle_press(const monome_event_t *e, void *data)
       break;
     }
     if(edit_module)
-      monome_edit_delay_handler(1);
+      monome_edit_delay_handler(1,
+                                module_parameter[1][0],
+                                module_parameter[1][1],
+                                module_parameter[1][2],
+                                module_parameter[1][3]);
+
   } else if(x>7&&x<12&&y<15) {
     if(module_parameter_led[0][2][x-8]!=y+1) {
       module_parameter_led[0][2][x-8]=y+1;
@@ -687,7 +743,12 @@ handle_press(const monome_event_t *e, void *data)
       break;
     }
     if(edit_module)
-      monome_edit_delay_handler(2);
+      monome_edit_delay_handler(2,
+                                module_parameter[2][0],
+                                module_parameter[2][1],
+                                module_parameter[2][2],
+                                module_parameter[2][3]);
+
   } else if(x>11&&x<16&&y<15) {
     if(module_parameter_led[0][3][x-12]!=y+1) {
       module_parameter_led[0][3][x-12]=y+1;
@@ -723,7 +784,12 @@ handle_press(const monome_event_t *e, void *data)
       break;
     }
     if(edit_module)
-      monome_edit_delay_handler(3);
+      monome_edit_delay_handler(3,
+                                module_parameter[3][0],
+                                module_parameter[3][1],
+                                module_parameter[3][2],
+                                module_parameter[3][3]);
+
   }
 
 } /* handle_press */
