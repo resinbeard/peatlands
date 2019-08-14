@@ -26,6 +26,7 @@ Copyright 2019 murray foster */
 #include <pthread.h>
 #include <signal.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 
 
@@ -963,18 +964,19 @@ int main(int argc, char *argv[])
   char *cyperus_cmd = NULL;
   char *monome_device_addr_port = "18629";
 
-  // char *monome_device_addr_format;
-  char *monome_device_addr = "osc.udp://127.0.0.1:18629/monome";
-
-  
+  char *monome_device_addr_format = "osc.udp://127.0.0.1:%s/monome";
+  char *monome_device_addr;
   
   lo_server_thread st = lo_server_thread_new(osc_port_in, error);
 
+  int handle_fileno;
+  FILE *cyperus_proc_handle = NULL;
+  
   int c;
   int exit_key;
   
   lo_addr_send = lo_address_new("127.0.0.1",osc_port_out);
-
+  
   if( argc > 1 )
     if( !strcmp(argv[1], "-h") ||
 	!strcmp(argv[1], "--help") ) {
@@ -990,7 +992,7 @@ int main(int argc, char *argv[])
     {
       store_flag = argv[c];
       if( store_flag != NULL )
-	{
+	{ 
 	  if( !strcmp(store_flag,"-cy") ||
 	      !strcmp(store_flag,"--cyperus-path")) {
 	    store_input=argv[c+1];
@@ -1008,6 +1010,12 @@ int main(int argc, char *argv[])
 	    store_input=argv[c+1];
 	    osc_port_out=store_input;
 	  }
+
+          if( !strcmp(store_flag, "-m") ||
+              !strcmp(store_flag, "--monome")) {
+            store_input=argv[c+1];
+            monome_device_addr_port=store_input;
+          }
           
 	  /* reset temporarily stored flag&input */
 	  store_input=NULL;
@@ -1016,7 +1024,7 @@ int main(int argc, char *argv[])
     }
 
   if( cyperus_cmd == NULL )
-    cyperus_cmd="cyperus -i 4 -o 4 &";
+    cyperus_cmd="cyperus -i 4 -o 4 > logs/cyperus.stdout 2>logs/cyperus.stderr";
   
   if( osc_port_in == NULL )
     osc_port_in="97211";
@@ -1024,14 +1032,20 @@ int main(int argc, char *argv[])
   if( osc_port_out == NULL )
     osc_port_out="97217";
 
-
+  monome_device_addr = malloc(sizeof(char) * (strlen(monome_device_addr_port) + strlen(monome_device_addr_format) + 1));
+  sprintf(monome_device_addr, monome_device_addr_format, monome_device_addr_port);
   printf("monome_device_addr: %s\n", monome_device_addr);
   monome = monome_open(monome_device_addr, "8002");  
   
   printf("cyperus-cmd: '%s'\n\n\n", cyperus_cmd);
 
-  /* system(cyperus_cmd); */
-  usleep(9999);
+  cyperus_proc_handle = popen(cyperus_cmd, "r");
+  handle_fileno = fileno(cyperus_proc_handle);
+  fcntl(handle_fileno, F_SETFL, O_NONBLOCK);
+
+  printf("cyperus launched\n");
+  
+  usleep(999999);
   
   /* non-generic methods */
   lo_server_thread_add_method(st, "/cyperus/list/main", "s", osc_list_main_handler, NULL);
@@ -1067,5 +1081,7 @@ int main(int argc, char *argv[])
 
   while(1){sleep(1);};
 
+  pclose(cyperus_proc_handle);
+  
   return 0;
 }
