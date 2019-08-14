@@ -31,7 +31,6 @@ Copyright 2019 murray foster */
 
 /* current state of monome grid */
 unsigned int grid[16][16] = { [0 ... 15][0 ... 15] = 0 };
-#define MONOME_DEVICE "osc.udp://127.0.0.1:18629/monome"
 
 /* these variables are for automagically hooking up monome */
 char *monome_name;
@@ -931,14 +930,10 @@ void print_usage() {
   printf("Usage: peatlands [options] [arg]\n\n");
   printf("Options:\n"
 	 " -h,  --help          displays this menu\n"
-	 " -i,  --input         input channels.  default: 8\n"
-	 " -o,  --output        output channels. default: 8\n"
-	 " -b,  --bitdepth      set bitdepth of capture to 8, 16, 24, 32, 64, or 128. default: 24\n"
-	 " -p,  --port          set osc interface receiving port. default: 97211\n"
+	 " -cy, --cyperus-path  command to execute cyperus. default: `cyperus -i 4 -o 4 &`\n"
+         " -p,  --receive-port  set osc interface receiving port. default: 97211\n"
 	 " -sp, --send-port     set osc interface sending port. default: 97217\n"
-	 " -f,  --file          set path of session file to load preexisting sounds.\n"
-	 " -fi, --fifo-size     set fifo buffer size for each channel. default: 2048\n\n"
-	 "documentation available soon\n\n");
+         " -m,  --monome        set monome port. default: \n\n");
 } /* print_usage */
 
 void print_header(void) {
@@ -960,14 +955,19 @@ void print_header(void) {
 int main(int argc, char *argv[])
 {
   struct monome_t *monome = NULL;
+  char *store_flag = NULL;
+  char *store_input = NULL;  
 
   char *osc_port_in = "97217";
   char *osc_port_out = "97211";
-
-  char *store_flag = NULL;
-  char *store_input = NULL;  
   char *cyperus_cmd = NULL;
+  char *monome_device_addr_port = "18629";
 
+  // char *monome_device_addr_format;
+  char *monome_device_addr = "osc.udp://127.0.0.1:18629/monome";
+
+  
+  
   lo_server_thread st = lo_server_thread_new(osc_port_in, error);
 
   int c;
@@ -996,6 +996,18 @@ int main(int argc, char *argv[])
 	    store_input=argv[c+1];
 	    cyperus_cmd=store_input;
 	  }
+
+          if( !strcmp(store_flag,"-rp") ||
+	      !strcmp(store_flag,"--receive-port")) {
+	    store_input=argv[c+1];
+	    osc_port_in=store_input;
+	  }
+
+          if( !strcmp(store_flag,"-sp") ||
+	      !strcmp(store_flag,"--send-port")) {
+	    store_input=argv[c+1];
+	    osc_port_out=store_input;
+	  }
           
 	  /* reset temporarily stored flag&input */
 	  store_input=NULL;
@@ -1012,12 +1024,14 @@ int main(int argc, char *argv[])
   if( osc_port_out == NULL )
     osc_port_out="97217";
 
+
+  printf("monome_device_addr: %s\n", monome_device_addr);
+  monome = monome_open(monome_device_addr, "8002");  
+  
   printf("cyperus-cmd: '%s'\n\n\n", cyperus_cmd);
 
-  //system(cyperus_cmd);
+  /* system(cyperus_cmd); */
   usleep(9999);
-  
-  printf("launched\n");
   
   /* non-generic methods */
   lo_server_thread_add_method(st, "/cyperus/list/main", "s", osc_list_main_handler, NULL);
@@ -1031,10 +1045,6 @@ int main(int argc, char *argv[])
   lo_server_thread_start(st);
 
   printf("osc started\n");
-  
-  char monome_device_addr[128] = MONOME_DEVICE;
-
-  monome = monome_open(MONOME_DEVICE, "8002");
 
   /* clear monome LEDs */
   monome_led_all(monome, 0);
