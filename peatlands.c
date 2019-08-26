@@ -360,13 +360,44 @@ clock_manager(void *arg) {
 		   4. tentatively update our modulation's position for this parameter */
 		modulated_parameters[i][c].value = step_value;
 		module_parameter[i][c] = modulated_parameters[i][c].value;
-                
-                monome_edit_delay_handler(i,
-                                          module_parameter[i][0],
-                                          module_parameter[i][1],
-                                          module_parameter[i][2],
-                                          module_parameter[i][3]);
 
+                switch(i) {
+                case 0:
+                  monome_edit_lowpass_handler(i,
+                                              module_parameter[i][0],
+                                              module_parameter[i][1],
+                                              module_parameter[i][2],
+                                              module_parameter[i][3]);
+                  
+                  break;
+                case 1:
+                  monome_edit_delay_handler(i,
+                                            module_parameter[i][0],
+                                            module_parameter[i][1],
+                                            module_parameter[i][2],
+                                            module_parameter[i][3]);
+                  
+                  break;
+                case 2:
+                  monome_edit_bandpass_handler(i,
+                                            module_parameter[i][0],
+                                            module_parameter[i][1],
+                                            module_parameter[i][2],
+                                            module_parameter[i][3]);
+                  
+                  break;
+                case 3:
+                  monome_edit_delay_handler(i,
+                                            module_parameter[i][0],
+                                            module_parameter[i][1],
+                                            module_parameter[i][2],
+                                            module_parameter[i][3]);
+                  break;
+                default:
+                  break;
+                }
+                
+                
 		modulated_parameters[i][c].position += 1;
 	      }
 	  }
