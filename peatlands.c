@@ -82,6 +82,12 @@ struct parameter_modulated modulated_parameters[MAXMODULES][MAXMODULEPARAMS];
 /* DELAY MODULE */
 
 float module_parameter_scale[MAXMODULES][MAXMODULEPARAMS][MAXMODULEPARAMSRES] = {
+  {
+    {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.96, 1.0},
+    {25.0, 50.0, 75.0, 150.0, 300.0, 450.0, 500.0, 700.0, 1000, 1200, 1500, 1700, 2000, 2500, 3000},
+    {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.94, 0.98},
+    {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.96, 1.0}
+  },
   { /* amount */
     {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.96, 1.0},
     /* time */
@@ -93,20 +99,14 @@ float module_parameter_scale[MAXMODULES][MAXMODULEPARAMS][MAXMODULEPARAMSRES] = 
   },
   {
     {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.96, 1.0},
-    {.01, .02, .03, .05, .08, .13, .21, .34, .55, .89, 1.44, 2.33, 3.77, 6.10, 9.87},
-    {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.94, 0.98},
-    {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.96, 1.0}
-  },
-  {
-    {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.96, 1.0},
-    {.01, .02, .05, .08, .12, .16, .24, .30, .47, .68, 1.2, 2.6, 5.7, 7.3, 10},
-    {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.94, 0.98},
+    {25.0, 50.0, 75.0, 150.0, 300.0, 450.0, 500.0, 700.0, 1000, 1200, 1500, 1700, 2000, 2500, 3000},
+    {0.00, 0.1, 1.0, 2.0, 4.0, 8.0, 16.0, 20.0, 25.0, 30.0, 50.0, 75.0, 100.0, 150.0, 200.0},
      {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.96, 1.0}
   },
   {
     {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.96, 1.0},
-    {0.001, 0.005, 0.011, 0.019, 0.022, 0.031, 0.052, 0.067, 0.081, .016, .022, .043, .061, .083, .01},
-    {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.94, 0.98},
+    {0.13333, 2.666667, 0.4, .533333, 0.666667, 0.8, 0.933333, 1.066667, 1.2, 1.33333, 1.466667, 1.6, 1.73333, 1.88887, 2.0},
+    {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.50, 0.55, 0.61, 0.77, 0.84, 0.9, 0.94, 1.0},
     {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.96, 1.0}
   }
 };
@@ -149,37 +149,55 @@ initialize_state_variables() {
 
 	  module_parameter_led[0][i][c] = 0;
 	  module_parameter_led[1][i][c] = 0;
-	  module_parameter[i][c] = 0.0;
+
+          module_parameter[i][c] = module_parameter_scale[i][c][6];
 	}
     }
-
-  module_parameter[0][0] = 0.5;//module_parameter_delay_scale_amount[0];
-  module_parameter[0][1] = 0.5;//module_parameter_delay_scale_time[0];
-  module_parameter[0][2] = 0.5;//module_parameter_delay_scale_feedback[0];
-  module_parameter[0][3] = 0.5;//module_parameter_delay_scale_filler[0];
-
-  module_parameter[1][0] = 0.5;//module_parameter_delay_scale_amount[0];
-  module_parameter[1][1] = 0.5;//module_parameter_delay_scale_time[0];
-  module_parameter[1][2] = 0.5;//module_parameter_delay_scale_feedback[0];
-  module_parameter[1][3] = 0.5;//module_parameter_delay_scale_filler[0];
-
-  module_parameter[2][0] = 0.5;//module_parameter_delay_scale_amount[0];
-  module_parameter[2][1] = 0.5;//module_parameter_delay_scale_time[0];
-  module_parameter[2][2] = 0.5;//module_parameter_delay_scale_feedback[0];
-  module_parameter[2][3] = 0.5;//module_parameter_delay_scale_filler[0];
-
-  module_parameter[3][0] = 0.5;//module_parameter_delay_scale_amount[0];
-  module_parameter[3][1] = 0.5;//module_parameter_delay_scale_time[0];
-  module_parameter[3][2] = 0.5;//module_parameter_delay_scale_feedback[0];
-  module_parameter[3][3] = 0.5;//module_parameter_delay_scale_filler[0];
 }
+
+
+int
+monome_add_lowpass_handler(int module_no, float amt, float freq, float filler0, float filler1)
+{
+  printf("lowpass bus path: %s\n", monome_cyperus_module_ids[module_no]);
+
+  printf("sending /cyperus/add/module/lowpass %s %f %f ... \n", monome_cyperus_module_ids[module_no], amt, freq);
+  lo_send(lo_addr_send, "/cyperus/add/module/lowpass", "sff", monome_cyperus_module_ids[module_no], amt, freq);
+  printf("sent.\n");
+  
+  return 0;
+} /* monome_add_lowpass_handler */
+
+int
+monome_edit_lowpass_handler(int module_no, float amt, float freq, float filler0, float filler1)
+{
+  printf("lowpass bus path: %s\n", monome_cyperus_module_ids[module_no]);
+
+  printf("sending /cyperus/edit/module/lowpass %s %f %f ... \n", monome_cyperus_module_ids[module_no], amt, freq);
+  lo_send(lo_addr_send, "/cyperus/edit/module/lowpass", "sff", monome_cyperus_module_ids[module_no], amt, freq);
+  printf("sent.\n");
+  
+  return 0;
+} /* monome_edit_lowpass_handler */
+
+
+int
+monome_add_delay_handler(int module_no, float amt, float time, float feedback, float filler)
+{
+
+  printf("delay bus path: %s\n", monome_cyperus_module_ids[module_no]);
+
+  printf("sending /cyperus/add/module/delay %s %f %f %f ... \n", monome_cyperus_module_ids[module_no], amt, time, feedback);
+  lo_send(lo_addr_send, "/cyperus/add/module/delay", "sfff", monome_cyperus_module_ids[module_no], amt, time, feedback);
+  printf("sent.\n");
+  
+  return 0;
+} /* monome_add_delay_handler */
 
 
 int
 monome_edit_delay_handler(int module_no, float amt, float time, float feedback, float filler)
 {
-  // printf("sending /cyperus/edit/module/delay %s %s ... \n", bus_port_out_path, main_out_0);
-  // lo_send(lo_addr_send, "/cyperus/add/connection", "ss", bus_port_out_path, main_out_0);
 
   printf("delay bus path: %s\n", monome_cyperus_module_ids[module_no]);
 
@@ -189,6 +207,63 @@ monome_edit_delay_handler(int module_no, float amt, float time, float feedback, 
   
   return 0;
 } /* monome_edit_delay_handler */
+
+
+int
+monome_add_bandpass_handler(int module_no, float amt, float freq, float q, float filler1)
+{
+
+  printf("bandpass bus path: %s\n", monome_cyperus_module_ids[module_no]);
+
+  printf("sending /cyperus/add/module/bandpass %s %f %f %f... \n", monome_cyperus_module_ids[module_no], amt, freq, q);
+  lo_send(lo_addr_send, "/cyperus/add/module/bandpass", "sfff", monome_cyperus_module_ids[module_no], amt, freq, q);
+  printf("sent.\n");
+  
+  return 0;
+} /* monome_add_bandpass_handler */
+
+
+int
+monome_edit_bandpass_handler(int module_no, float amt, float freq, float filler0, float filler1)
+{
+
+  printf("bandpass bus path: %s\n", monome_cyperus_module_ids[module_no]);
+
+  printf("sending /cyperus/edit/module/bandpass %s %f %f ... \n", monome_cyperus_module_ids[module_no], amt, freq);
+  lo_send(lo_addr_send, "/cyperus/edit/module/bandpass", "sfff", monome_cyperus_module_ids[module_no], amt, freq);
+  printf("sent.\n");
+  
+  return 0;
+} /* monome_edit_bandpass_handler */
+
+
+int
+monome_add_pitch_shift_handler(int module_no, float amt, float shift, float mix, float filler)
+{
+
+  printf("pitch_shift bus path: %s\n", monome_cyperus_module_ids[module_no]);
+
+  printf("sending /cyperus/add/module/pitch_shift %s %f %f %f ... \n", monome_cyperus_module_ids[module_no], amt, shift, mix);
+  lo_send(lo_addr_send, "/cyperus/add/module/pitch_shift", "sfff", monome_cyperus_module_ids[module_no], amt, shift);
+  printf("sent.\n");
+  
+  return 0;
+} /* monome_add_pitch_shift_handler */
+
+
+
+int
+monome_edit_pitch_shift_handler(int module_no, float amt, float shift, float mix, float filler)
+{
+
+  printf("pitch_shift bus path: %s\n", monome_cyperus_module_ids[module_no]);
+
+  printf("sending /cyperus/edit/module/pitch_shift %s %f %f %f ... \n", monome_cyperus_module_ids[module_no], amt, shift, mix);
+  lo_send(lo_addr_send, "/cyperus/edit/module/pitch_shift", "sfff", monome_cyperus_module_ids[module_no], amt, shift);
+  printf("sent.\n");
+  
+  return 0;
+} /* monome_edit_pitch_shift_handler */
 
 
 
@@ -312,10 +387,6 @@ setup_cyperus_modules() {
   char *module_port_in, *module_port_out;
   char *module_port_in_path, *module_port_out_path;
 
-  float amt = 0.5;
-  float time = 0.5;
-  float feedback = 0.5;
-
   int count, c;
   int module_idx = 0;
 
@@ -422,8 +493,29 @@ setup_cyperus_modules() {
     strcpy(bus_port_out_path, bus_path);
     strcat(bus_port_out_path, ":");
     strcat(bus_port_out_path, bus_port_out);
+
+
+    switch(module_idx) {
+    case 0:
+      lo_send(lo_addr_send, "/cyperus/add/module/lowpass", "sff", bus_path, module_parameter_scale[module_idx][0][6],
+              module_parameter_scale[module_idx][1][6]);
+      break;
+    case 1:
+      lo_send(lo_addr_send, "/cyperus/add/module/delay", "sfff", bus_path, module_parameter_scale[module_idx][0][6],
+              module_parameter_scale[module_idx][1][6], module_parameter_scale[module_idx][2][6]);
+      break;
+    case 2:
+      lo_send(lo_addr_send, "/cyperus/add/module/bandpass", "sfff", bus_path, module_parameter_scale[module_idx][0][6],
+              module_parameter_scale[module_idx][1][6]);
+      break;
+    case 3:
+      lo_send(lo_addr_send, "/cyperus/add/module/pitch_shift", "sfff", bus_path, module_parameter_scale[module_idx][0][6],
+              module_parameter_scale[module_idx][1][6], module_parameter_scale[module_idx][2][6]);
+      break;
+    default:
+      break;
+    }
     
-    lo_send(lo_addr_send, "/cyperus/add/module/delay", "sfff", bus_path, amt, time, feedback);
     while(incoming_message == NULL)
       usleep(500);
     delay_id = malloc(sizeof(char) * (strlen(incoming_message) + 1));
@@ -576,11 +668,11 @@ handle_press(const monome_event_t *e, void *data)
     else
       amt = module_parameter[0][0];
     
-    monome_edit_delay_handler(0,
-                              amt,
-                              module_parameter[0][1],
-                              module_parameter[0][2],
-                              module_parameter[0][3]);
+    monome_edit_lowpass_handler(0,
+                                amt,
+                                module_parameter[0][1],
+                                module_parameter[0][2],
+                                module_parameter[0][3]);
 
 
   } else if(x>3&&x<8&&y==15) {
@@ -605,11 +697,11 @@ handle_press(const monome_event_t *e, void *data)
     else
       amt = module_parameter[2][0];
     
-    monome_edit_delay_handler(2,
-                              amt,
-                              module_parameter[2][1],
-                              module_parameter[2][2],
-                              module_parameter[2][3]);
+    monome_edit_bandpass_handler(2,
+                                 amt,
+                                 module_parameter[2][1],
+                                 module_parameter[2][2],
+                                 module_parameter[2][3]);
 
   } else if(x>11&&x<16&&y==15) {
     module_bypass[3]=!module_bypass[3];
@@ -619,11 +711,11 @@ handle_press(const monome_event_t *e, void *data)
     else
       amt = module_parameter[3][0];
     
-    monome_edit_delay_handler(3,
-                              amt,
-                              module_parameter[3][1],
-                              module_parameter[3][2],
-                              module_parameter[3][3]);
+    monome_edit_pitch_shift_handler(3,
+                                    amt,
+                                    module_parameter[3][1],
+                                    module_parameter[3][2],
+                                    module_parameter[3][3]);
 
   }
 
@@ -660,11 +752,11 @@ handle_press(const monome_event_t *e, void *data)
       break;
     }
     if(edit_module)
-      monome_edit_delay_handler(0,
-                                module_parameter[0][0],
-                                module_parameter[0][1],
-                                module_parameter[0][2],
-                                module_parameter[0][3]);
+      monome_edit_lowpass_handler(0,
+                                  module_parameter[0][0],
+                                  module_parameter[0][1],
+                                  module_parameter[0][2],
+                                  module_parameter[0][3]);
 
 
   } else if(x>3&&x<8&&y<15) {
@@ -743,11 +835,11 @@ handle_press(const monome_event_t *e, void *data)
       break;
     }
     if(edit_module)
-      monome_edit_delay_handler(2,
-                                module_parameter[2][0],
-                                module_parameter[2][1],
-                                module_parameter[2][2],
-                                module_parameter[2][3]);
+      monome_edit_bandpass_handler(2,
+                                   module_parameter[2][0],
+                                   module_parameter[2][1],
+                                   module_parameter[2][2],
+                                   module_parameter[2][3]);
 
   } else if(x>11&&x<16&&y<15) {
     if(module_parameter_led[0][3][x-12]!=y+1) {
@@ -784,11 +876,11 @@ handle_press(const monome_event_t *e, void *data)
       break;
     }
     if(edit_module)
-      monome_edit_delay_handler(3,
-                                module_parameter[3][0],
-                                module_parameter[3][1],
-                                module_parameter[3][2],
-                                module_parameter[3][3]);
+      monome_edit_pitch_shift_handler(3,
+                                      module_parameter[3][0],
+                                      module_parameter[3][1],
+                                      module_parameter[3][2],
+                                      module_parameter[3][3]);
 
   }
 
@@ -897,6 +989,26 @@ int osc_list_bus_port_handler(const char *path, const char *types, lo_arg **argv
 } /* osc_list_bus_port_handler */
 
 
+int osc_add_module_lowpass_handler(const char *path, const char *types, lo_arg **argv,
+				    int argc, void *data, void *user_data)
+{
+  char *lowpass_id = argv[0];
+  incoming_message = malloc(sizeof(char) * (strlen(lowpass_id) + 1));
+  strcpy(incoming_message, lowpass_id);
+  return 0;
+} /* osc_add_module_lowpass_handler */
+
+
+int osc_edit_module_lowpass_handler(const char *path, const char *types, lo_arg **argv,
+				    int argc, void *data, void *user_data)
+{
+  char *lowpass_id = argv[0];
+  incoming_message = malloc(sizeof(char) * (strlen(lowpass_id) + 1));
+  strcpy(incoming_message, lowpass_id);
+  return 0;
+} /* osc_edit_module_lowpass_handler */
+
+
 int osc_add_module_delay_handler(const char *path, const char *types, lo_arg **argv,
 				    int argc, void *data, void *user_data)
 {
@@ -905,6 +1017,57 @@ int osc_add_module_delay_handler(const char *path, const char *types, lo_arg **a
   strcpy(incoming_message, delay_id);
   return 0;
 } /* osc_add_module_delay_handler */
+
+
+int osc_edit_module_delay_handler(const char *path, const char *types, lo_arg **argv,
+				    int argc, void *data, void *user_data)
+{
+  char *delay_id = argv[0];
+  incoming_message = malloc(sizeof(char) * (strlen(delay_id) + 1));
+  strcpy(incoming_message, delay_id);
+  return 0;
+} /* osc_edit_module_delay_handler */
+
+
+int osc_add_module_bandpass_handler(const char *path, const char *types, lo_arg **argv,
+				    int argc, void *data, void *user_data)
+{
+  char *bandpass_id = argv[0];
+  incoming_message = malloc(sizeof(char) * (strlen(bandpass_id) + 1));
+  strcpy(incoming_message, bandpass_id);
+  return 0;
+} /* osc_add_module_bandpass_handler */
+
+
+
+int osc_edit_module_bandpass_handler(const char *path, const char *types, lo_arg **argv,
+				    int argc, void *data, void *user_data)
+{
+  char *bandpass_id = argv[0];
+  incoming_message = malloc(sizeof(char) * (strlen(bandpass_id) + 1));
+  strcpy(incoming_message, bandpass_id);
+  return 0;
+} /* osc_edit_module_bandpass_handler */
+
+
+int osc_add_module_pitch_shift_handler(const char *path, const char *types, lo_arg **argv,
+				    int argc, void *data, void *user_data)
+{
+  char *pitch_shift_id = argv[0];
+  incoming_message = malloc(sizeof(char) * (strlen(pitch_shift_id) + 1));
+  strcpy(incoming_message, pitch_shift_id);
+  return 0;
+} /* osc_add_module_pitch_shift_handler */
+
+
+int osc_edit_module_pitch_shift_handler(const char *path, const char *types, lo_arg **argv,
+				    int argc, void *data, void *user_data)
+{
+  char *pitch_shift_id = argv[0];
+  incoming_message = malloc(sizeof(char) * (strlen(pitch_shift_id) + 1));
+  strcpy(incoming_message, pitch_shift_id);
+  return 0;
+} /* osc_edit_module_pitch_shift_handler */
 
 
 int osc_list_module_port_handler(const char *path, const char *types, lo_arg **argv,
@@ -917,15 +1080,6 @@ int osc_list_module_port_handler(const char *path, const char *types, lo_arg **a
   strcpy(incoming_message, result_str);
   return 0;
 } /* osc_list_module_port_handler */
-
-int osc_edit_module_delay_handler(const char *path, const char *types, lo_arg **argv,
-				    int argc, void *data, void *user_data)
-{
-  char *delay_id = argv[0];
-  incoming_message = malloc(sizeof(char) * (strlen(delay_id) + 1));
-  strcpy(incoming_message, delay_id);
-  return 0;
-} /* osc_edit_module_delay_handler */
 
 void print_usage() {
   printf("Usage: peatlands [options] [arg]\n\n");
@@ -1045,12 +1199,19 @@ int main(int argc, char *argv[])
   lo_server_thread_add_method(st, "/cyperus/list/bus_port", "ss", osc_list_bus_port_handler, NULL);
   lo_server_thread_add_method(st, "/cyperus/list/module_port", "ss", osc_list_module_port_handler, NULL);
 
+  lo_server_thread_add_method(st, "/cyperus/add/module/lowpass", "sff", osc_add_module_lowpass_handler, NULL);
+  lo_server_thread_add_method(st, "/cyperus/edit/module/lowpass", "sff", osc_edit_module_lowpass_handler, NULL);
+
   lo_server_thread_add_method(st, "/cyperus/add/module/delay", "sfff", osc_add_module_delay_handler, NULL);
   lo_server_thread_add_method(st, "/cyperus/edit/module/delay", "sfff", osc_edit_module_delay_handler, NULL);
 
-  lo_server_thread_start(st);
+  lo_server_thread_add_method(st, "/cyperus/add/module/bandpass", "sfff", osc_add_module_bandpass_handler, NULL);
+  lo_server_thread_add_method(st, "/cyperus/edit/module/bandpass", "sfff", osc_edit_module_bandpass_handler, NULL);
 
-  printf("osc started\n");
+  lo_server_thread_add_method(st, "/cyperus/add/module/pitch_shift", "sfff", osc_add_module_pitch_shift_handler, NULL);
+  lo_server_thread_add_method(st, "/cyperus/edit/module/pitch_shift", "sfff", osc_edit_module_pitch_shift_handler, NULL);
+
+  lo_server_thread_start(st);
 
   /* clear monome LEDs */
   monome_led_all(monome, 0);
