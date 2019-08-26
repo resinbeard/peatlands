@@ -103,12 +103,16 @@ float module_parameter_scale[MAXMODULES][MAXMODULEPARAMS][MAXMODULEPARAMSRES] = 
     {0.00, 0.1, 1.0, 2.0, 4.0, 8.0, 16.0, 20.0, 25.0, 30.0, 50.0, 75.0, 100.0, 150.0, 200.0},
      {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.96, 1.0}
   },
-  {
+    { /* amount */
     {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.96, 1.0},
-    {0.13333, 2.666667, 0.4, .533333, 0.666667, 0.8, 0.933333, 1.066667, 1.2, 1.33333, 1.466667, 1.6, 1.73333, 1.88887, 2.0},
-    {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.50, 0.55, 0.61, 0.77, 0.84, 0.9, 0.94, 1.0},
+    /* time */
+    {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.5, 2.0, 4.0, 6.0, 8.0},
+    /* feedback */
+    {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.94, 0.98},
+    /* filler */
     {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.96, 1.0}
   }
+
 };
 
 
@@ -509,7 +513,7 @@ setup_cyperus_modules() {
               module_parameter_scale[module_idx][1][6]);
       break;
     case 3:
-      lo_send(lo_addr_send, "/cyperus/add/module/pitch_shift", "sfff", bus_path, module_parameter_scale[module_idx][0][6],
+      lo_send(lo_addr_send, "/cyperus/add/module/delay", "sfff", bus_path, module_parameter_scale[module_idx][0][6],
               module_parameter_scale[module_idx][1][6], module_parameter_scale[module_idx][2][6]);
       break;
     default:
@@ -711,7 +715,7 @@ handle_press(const monome_event_t *e, void *data)
     else
       amt = module_parameter[3][0];
     
-    monome_edit_pitch_shift_handler(3,
+    monome_edit_delay_handler(3,
                                     amt,
                                     module_parameter[3][1],
                                     module_parameter[3][2],
@@ -876,7 +880,7 @@ handle_press(const monome_event_t *e, void *data)
       break;
     }
     if(edit_module)
-      monome_edit_pitch_shift_handler(3,
+      monome_edit_delay_handler(3,
                                       module_parameter[3][0],
                                       module_parameter[3][1],
                                       module_parameter[3][2],
