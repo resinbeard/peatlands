@@ -99,7 +99,7 @@ float module_parameter_scale[MAXMODULES][MAXMODULEPARAMS][MAXMODULEPARAMSRES] = 
   },
   {
     {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.96, 1.0},
-    {25.0, 50.0, 75.0, 150.0, 300.0, 450.0, 500.0, 700.0, 1000, 1200, 1500, 1700, 2000, 2500, 3000},
+    {0.0, 100.0, 200.0, 250.0, 300.0, 350.0, 450.0, 600.0, 800.0, 1000.0, 1250.0, 1500.0, 1750.0, 2000.0, 3000.0},
     {0.00, 0.1, 1.0, 2.0, 4.0, 8.0, 16.0, 20.0, 25.0, 30.0, 50.0, 75.0, 100.0, 150.0, 200.0},
      {0.06, 0.12, 0.19, 0.24, 0.3, 0.36, 0.43, 0.49, 0.55, 0.61, 0.77, 0.84, 0.9, 0.96, 1.0}
   },
@@ -228,13 +228,13 @@ monome_add_bandpass_handler(int module_no, float amt, float freq, float q, float
 
 
 int
-monome_edit_bandpass_handler(int module_no, float amt, float freq, float filler0, float filler1)
+monome_edit_bandpass_handler(int module_no, float amt, float freq, float q, float filler1)
 {
 
   printf("bandpass bus path: %s\n", monome_cyperus_module_ids[module_no]);
 
-  printf("sending /cyperus/edit/module/bandpass %s %f %f ... \n", monome_cyperus_module_ids[module_no], amt, freq);
-  lo_send(lo_addr_send, "/cyperus/edit/module/bandpass", "sfff", monome_cyperus_module_ids[module_no], amt, freq);
+  printf("sending /cyperus/edit/module/bandpass %s %f %f ... \n", monome_cyperus_module_ids[module_no], amt, q);
+  lo_send(lo_addr_send, "/cyperus/edit/module/bandpass", "sfff", monome_cyperus_module_ids[module_no], amt, q);
   printf("sent.\n");
   
   return 0;
@@ -541,7 +541,7 @@ setup_cyperus_modules() {
       break;
     case 2:
       lo_send(lo_addr_send, "/cyperus/add/module/bandpass", "sfff", bus_path, module_parameter_scale[module_idx][0][6],
-              module_parameter_scale[module_idx][1][6]);
+              module_parameter_scale[module_idx][1][6], module_parameter_scale[module_idx][2][6]);
       break;
     case 3:
       lo_send(lo_addr_send, "/cyperus/add/module/delay", "sfff", bus_path, module_parameter_scale[module_idx][0][6],
